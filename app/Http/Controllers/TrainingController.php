@@ -722,21 +722,40 @@ class TrainingController extends Controller
     {
         $this->authorize('togglePreTrainingCompleted', $training);
 
-        // Fetch the user, states and update them
+        // Fetch the authenticated user
         $user = Auth::user();
-        $state = $training->pre_training_completed;
-        $newState = ! $state;
-        $newStateText = (($newState) ? 'completed' : 'not completed');
+        $cid = $user->id;
 
-        // Update the state in database
+        // Check if the user has passed the VATITA S1 Entry Exam via the VATEUD API
+        $exams = $this->_fetchVateud('https://core.vateud.net/api/facility/user/' . $cid . '/exams');
+        $examResults = $exams['data']['results'] ?? [];
+
+        $hasPassedExam = false;
+        foreach ($examResults as $exam) {
+            if ($exam['exam_id'] == 33 && $exam['passed']) {
+                $hasPassedExam = true;
+                break;
+            }
+        }
+
+        if (!$hasPassedExam) {
+            return redirect($training->path())->with('error', 'User has not passed the VATITA S1 Entry Exam and cannot complete pre-training.');
+        }
+
+        // Fetch the current state and toggle it
+        $state = $training->pre_training_completed;
+        $newState = !$state;
+        $newStateText = $newState ? 'completed' : 'not completed';
+
+        // Update the state in the database
         $training->pre_training_completed = $newState;
         $training->save();
 
         // Logging
-        ActivityLogController::warning('TRAINING', 'Student marked pre-training as completed ' . $training->id);
+        ActivityLogController::warning('TRAINING', 'Student marked pre-training as ' . $newStateText . ' for training ' . $training->id);
         TrainingActivityController::create($training->id, 'PRETRAINING', $newState, $state, $user->id);
 
-        return redirect($training->path())->withSuccess('Pre-training marked as ' . $newStateText);
+        return redirect($training->path())->with('success', 'Pre-training marked as ' . $newStateText);
     }
 
     /**

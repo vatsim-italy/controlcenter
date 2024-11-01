@@ -1,4 +1,4 @@
-#!/bin/bash
+/bin/bash
 set -e
 
 CONTROL_CENTER_ROOT=/app

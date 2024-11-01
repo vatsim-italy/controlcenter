@@ -107,8 +107,12 @@ class ReportController extends Controller
         }
 
         if (isset($trainingReports) && isset($examinationReports)) {
-            $entries = $trainingReports->merge($examinationReports);
-            $entries = $entries->merge($activities);
+            $entries = $trainingReports->concat($examinationReports);
+            $entries = $entries->concat($activities);
+        } elseif (isset($trainingReports)) {
+            $entries = $trainingReports->concat($activities);
+        } elseif (isset($examinationReports)) {
+            $entries = $examinationReports->concat($activities);
         } else {
             $entries = $activities;
         }

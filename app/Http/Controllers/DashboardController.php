@@ -8,6 +8,7 @@ use App\Models\TrainingInterest;
 use App\Models\TrainingReport;
 use App\Models\User;
 use App\Models\Vote;
+use App\Models\Area;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
 
@@ -53,6 +54,7 @@ class DashboardController extends Controller
         $trainings = $user->trainings;
         $statuses = TrainingController::$statuses;
         $types = TrainingController::$types;
+        $queues = $this->getQueueStats(false);
 
         $dueInterestRequest = TrainingInterest::whereIn('training_id', $user->trainings->pluck('id'))->where('expired', false)->get()->first();
 
@@ -97,5 +99,55 @@ class DashboardController extends Controller
         $members = User::has('ratings')->get()->sortBy('name');
 
         return view('endorsements', compact('members'));
+    }
+
+    /**
+     * Return the new/completed request statistics for 6 months
+     *
+     * @param  int  $areaFilter  areaId to filter by
+     * @return mixed
+     */
+    protected function getQueueStats($areaFilter)
+    {
+        $payload = [];
+        if ($areaFilter) {
+            foreach (Area::find($areaFilter)->ratings as $rating) {
+                if ($rating->pivot->queue_length_low && $rating->pivot->queue_length_high) {
+                    $payload[$rating->name] = [
+                        $rating->pivot->queue_length_low,
+                        $rating->pivot->queue_length_high,
+                    ];
+                }
+            }
+        } else {
+            $divideRating = [];
+            foreach (Area::all() as $area) {
+                // Loop through the ratings of this area to get queue length
+                foreach ($area->ratings as $rating) {
+                    // Only calculate if queue length is defined
+                    if ($rating->pivot->queue_length_low && $rating->pivot->queue_length_high) {
+                        if (isset($payload[$rating->name])) {
+                            $payload[$rating->name][0] = $payload[$rating->name][0] + $rating->pivot->queue_length_low;
+                            $payload[$rating->name][1] = $payload[$rating->name][1] + $rating->pivot->queue_length_high;
+                            $divideRating[$rating->name]++;
+                        } else {
+                            $payload[$rating->name] = [
+                                $rating->pivot->queue_length_low,
+                                $rating->pivot->queue_length_high,
+                            ];
+                            $divideRating[$rating->name] = 1;
+                        }
+                    }
+                }
+            }
+
+            // Divide the queue length appropriately to get an average across areas
+            foreach ($payload as $queue => $value) {
+                $payload[$queue][0] = $value[0] / $divideRating[$queue];
+                $payload[$queue][1] = $value[1] / $divideRating[$queue];
+            }
+        }
+
+        return $payload;
     }
 }

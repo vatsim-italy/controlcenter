@@ -322,36 +322,36 @@
             </div>
         </div>
     </div>
-
+    
     <div class="col-xl-4 col-md-12 mb-12">
-        <div class="card shadow mb-4">
-            <div class="card-header bg-primary py-3 d-flex flex-row align-items-center justify-content-between">
-                <h6 class="m-0 fw-bold text-white">
-                    Estimated queue lengths
-                </h6> 
-            </div>
-            <div class="card-body p-0">
-                <table class="table table-striped table-sm table-hover table-leftpadded mb-0" width="100%" cellspacing="0">
-                    <thead class="table-light">
-                        <tr>
-                            <th>Rating</th>
-                            <th>Waiting time average low — high</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-
-                        @foreach($queues as $queue => $time)
+            <div class="card shadow mb-4">
+                <div class="card-header bg-primary py-3 d-flex flex-row align-items-center justify-content-between">
+                    <h6 class="m-0 fw-bold text-white">
+                        Estimated queue lengths
+                    </h6> 
+                </div>
+                <div class="card-body p-0">
+                    <table class="table table-striped table-sm table-hover table-leftpadded mb-0" width="100%" cellspacing="0">
+                        <thead class="table-light">
                             <tr>
-                                <td>{{ $queue }}</td>
-                                <td>{{ \Carbon\CarbonInterval::seconds(round($time[0]))->cascade()->forHumans(['parts' => 2]) }} — {{ \Carbon\CarbonInterval::seconds(round($time[1]))->cascade()->forHumans(['parts' => 2]) }}</td>
+                                <th>Rating</th>
+                                <th>Waiting time average low — high</th>
                             </tr>
-                        @endforeach
-
-                    </tbody>
-                </table>
+                        </thead>
+                        <tbody>
+    
+                            @foreach($queues as $queue => $time)
+                                <tr>
+                                    <td>{{ $queue }}</td>
+                                    <td>{{ \Carbon\CarbonInterval::seconds(round($time[0]))->cascade()->forHumans(['parts' => 2]) }} — {{ \Carbon\CarbonInterval::seconds(round($time[1]))->cascade()->forHumans(['parts' => 2]) }}</td>
+                                </tr>
+                            @endforeach
+    
+                        </tbody>
+                    </table>
+                </div>
             </div>
         </div>
-    </div>
-    
+
 </div>
 @endsection

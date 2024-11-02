@@ -22,7 +22,7 @@ services:
   db:
     image: docker.io/library/mariadb:11
     ports:
-      - 3306:3306
+      - 3399:3306
     environment:
       MARIADB_DATABASE: test
       MARIADB_ROOT_PASSWORD: root

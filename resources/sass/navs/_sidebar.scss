@@ -6,7 +6,9 @@
 
     padding: 0 1.0rem;
     position: relative;
-    background-color: $primary;
+
+    @include gradient(180deg, $list1);
+    //background-color: $primary;
 
     &-button {
         color: $primary;

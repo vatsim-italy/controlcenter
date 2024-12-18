@@ -116,6 +116,7 @@ Route::middleware(['auth', 'activity', 'suspended'])->group(function () {
         Route::patch('/training/edit/{training}', 'updateRequest')->name('training.update.request');
         Route::post('/training/store', 'store')->name('training.store');
         Route::get('/training/{training}/action/close', 'close')->name('training.action.close');
+        Route::get('/training/{training}/action/selfassign', 'close')->name('training.action.selfassign');
         Route::get('/training/{training}/action/pretraining', 'togglePreTrainingCompleted')->name('training.action.pretraining');
         Route::patch('/training/{training}', 'updateDetails')->name('training.update.details');
         Route::get('/training/{training}', 'show')->name('training.show');

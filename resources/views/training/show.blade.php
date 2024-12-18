@@ -1,20 +1,26 @@
 @extends('layouts.app')
-
 @section('title', 'Training')
 @section('title-flex')
     <div>
         @can('close', $training)
             <a href="{{ route('training.action.close', $training->id) }}" onclick="return confirm('Are you sure you want to close your training?')" class="btn btn-danger"><i class="fas fa-xmark"></i> Close my training</a>
         @endcan
+
         @can('togglePreTrainingCompleted', $training)
             @if($training->pre_training_completed)
                 <a href="{{ route('training.action.pretraining', $training->id) }}" onclick="return confirm('Are you sure you want to mark this pre-training as not completed?')" class="btn btn-primary"><i class="fas fa-xmark"></i> Mark pre-training as not completed</a>
             @else
                 <a href="{{ route('training.action.pretraining', $training->id) }}" onclick="return confirm('Are you sure you want to mark this pre-training as completed?')" class="btn btn-success"><i class="fas fa-check"></i> Mark pre-training as completed</a>
             @endif
+
+            {{-- Check if the status is "IN_QUEUE" and the training name is "S1" --}}
+            @if($training->status == \App\Helpers\TrainingStatus::IN_QUEUE->value && $training->name == 'S1')
+                <a href="{{ route('training.action.selfassign', $training->id) }}" onclick="return confirm('Are you sure you want to self-assign to the VATITA S1 Entry Exam?')" class="btn btn-info"><i class="fas fa-user-plus"></i> Self-Assign to S1 Entry Exam</a>
+            @endif
         @endcan
     </div>
 @endsection
+
 @section('content')
 
 @if($training->status < \App\Helpers\TrainingStatus::COMPLETED->value && $training->status != \App\Helpers\TrainingStatus::CLOSED_BY_STUDENT->value)

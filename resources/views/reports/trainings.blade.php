@@ -316,46 +316,6 @@
                 label: 'C3',
                 backgroundColor: 'rgb(150, 200, 100)',
                 data: newRequestsData["C3"]
-            }, {
-                label: 'MAE ENGM TWR',
-                backgroundColor: 'rgb(25, 25, 25)',
-                data: newRequestsData["MAE ENGM TWR"],
-                hidden: true
-            }, {
-                label: 'MAE ENGM APP',
-                backgroundColor: 'rgb(50, 50, 50)',
-                data: newRequestsData["MAE ENGM APP"],
-                hidden: true
-            }, {
-                label: 'MAE ESSA TWR',
-                backgroundColor: 'rgb(75, 75, 75)',
-                data: newRequestsData["MAE ESSA TWR"],
-                hidden: true
-            }, {
-                label: 'MAE ESSA APP',
-                backgroundColor: 'rgb(100, 100, 100)',
-                data: newRequestsData["MAE ESSA APP"],
-                hidden: true
-            }, {
-                label: 'MAE EKCH TWR',
-                backgroundColor: 'rgb(125, 125, 125)',
-                data: newRequestsData["MAE EKCH TWR"],
-                hidden: true
-            }, {
-                label: 'MAE EKCH APP',
-                backgroundColor: 'rgb(150, 150, 150)',
-                data: newRequestsData["MAE EKCH APP"],
-                hidden: true
-            }, {
-                label: 'Oceanic BICC',
-                backgroundColor: 'rgb(150, 150, 255)',
-                data: newRequestsData["Oceanic BICC"],
-                hidden: true
-            }, {
-                label: 'Oceanic ENOB',
-                backgroundColor: 'rgb(75, 75, 255)',
-                data: newRequestsData["Oceanic ENOB"],
-                hidden: true
             }]
 
         };
@@ -421,46 +381,6 @@
                 label: 'C3',
                 backgroundColor: 'rgb(150, 200, 100)',
                 data: completedRequestsData["C3"]
-            }, {
-                label: 'MAE ENGM TWR',
-                backgroundColor: 'rgb(25, 25, 25)',
-                data: completedRequestsData["MAE ENGM TWR"],
-                hidden: true
-            }, {
-                label: 'MAE ENGM APP',
-                backgroundColor: 'rgb(50, 50, 50)',
-                data: completedRequestsData["MAE ENGM APP"],
-                hidden: true
-            }, {
-                label: 'MAE ESSA TWR',
-                backgroundColor: 'rgb(75, 75, 75)',
-                data: completedRequestsData["MAE ESSA TWR"],
-                hidden: true
-            }, {
-                label: 'MAE ESSA APP',
-                backgroundColor: 'rgb(100, 100, 100)',
-                data: completedRequestsData["MAE ESSA APP"],
-                hidden: true
-            }, {
-                label: 'MAE EKCH TWR',
-                backgroundColor: 'rgb(125, 125, 125)',
-                data: completedRequestsData["MAE EKCH TWR"],
-                hidden: true
-            }, {
-                label: 'MAE EKCH APP',
-                backgroundColor: 'rgb(150, 150, 150)',
-                data: completedRequestsData["MAE EKCH APP"],
-                hidden: true
-            }, {
-                label: 'Oceanic BICC',
-                backgroundColor: 'rgb(150, 150, 255)',
-                data: completedRequestsData["Oceanic BICC"],
-                hidden: true
-            }, {
-                label: 'Oceanic ENOB',
-                backgroundColor: 'rgb(75, 75, 255)',
-                data: completedRequestsData["Oceanic ENOB"],
-                hidden: true
             }]
 
         };
@@ -527,46 +447,6 @@
                 label: 'C3',
                 backgroundColor: 'rgb(150, 200, 100)',
                 data: closedRequestsData["C3"]
-            }, {
-                label: 'MAE ENGM TWR',
-                backgroundColor: 'rgb(25, 25, 25)',
-                data: closedRequestsData["MAE ENGM TWR"],
-                hidden: true
-            }, {
-                label: 'MAE ENGM APP',
-                backgroundColor: 'rgb(50, 50, 50)',
-                data: closedRequestsData["MAE ENGM APP"],
-                hidden: true
-            }, {
-                label: 'MAE ESSA TWR',
-                backgroundColor: 'rgb(75, 75, 75)',
-                data: closedRequestsData["MAE ESSA TWR"],
-                hidden: true
-            }, {
-                label: 'MAE ESSA APP',
-                backgroundColor: 'rgb(100, 100, 100)',
-                data: closedRequestsData["MAE ESSA APP"],
-                hidden: true
-            }, {
-                label: 'MAE EKCH TWR',
-                backgroundColor: 'rgb(125, 125, 125)',
-                data: closedRequestsData["MAE EKCH TWR"],
-                hidden: true
-            }, {
-                label: 'MAE EKCH APP',
-                backgroundColor: 'rgb(150, 150, 150)',
-                data: closedRequestsData["MAE EKCH APP"],
-                hidden: true
-            }, {
-                label: 'Oceanic BICC',
-                backgroundColor: 'rgb(150, 150, 255)',
-                data: closedRequestsData["Oceanic BICC"],
-                hidden: true
-            }, {
-                label: 'Oceanic ENOB',
-                backgroundColor: 'rgb(75, 75, 255)',
-                data: closedRequestsData["Oceanic ENOB"],
-                hidden: true
             }]
 
         };

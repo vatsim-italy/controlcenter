@@ -722,21 +722,40 @@ class TrainingController extends Controller
     {
         $this->authorize('togglePreTrainingCompleted', $training);
 
-        // Fetch the user, states and update them
+        // Fetch the authenticated user
         $user = Auth::user();
-        $state = $training->pre_training_completed;
-        $newState = ! $state;
-        $newStateText = (($newState) ? 'completed' : 'not completed');
+        $cid = $user->id;
 
-        // Update the state in database
+        // Check if the user has passed the VATITA S1 Entry Exam via the VATEUD API
+        $exams = $this->_fetchVateud('https://core.vateud.net/api/facility/user/' . $cid . '/exams');
+        $examResults = $exams['data']['results'] ?? [];
+
+        $hasPassedExam = false;
+        foreach ($examResults as $exam) {
+            if ($exam['exam_id'] == 33 && $exam['passed']) {
+                $hasPassedExam = true;
+                break;
+            }
+        }
+
+        if (!$hasPassedExam) {
+            return redirect($training->path())->with('error', 'User has not passed the VATITA S1 Entry Exam and cannot complete pre-training.');
+        }
+
+        // Fetch the current state and toggle it
+        $state = $training->pre_training_completed;
+        $newState = !$state;
+        $newStateText = $newState ? 'completed' : 'not completed';
+
+        // Update the state in the database
         $training->pre_training_completed = $newState;
         $training->save();
 
         // Logging
-        ActivityLogController::warning('TRAINING', 'Student marked pre-training as completed ' . $training->id);
+        ActivityLogController::warning('TRAINING', 'Student marked pre-training as ' . $newStateText . ' for training ' . $training->id);
         TrainingActivityController::create($training->id, 'PRETRAINING', $newState, $state, $user->id);
 
-        return redirect($training->path())->withSuccess('Pre-training marked as ' . $newStateText);
+        return redirect($training->path())->with('success', 'Pre-training marked as ' . $newStateText);
     }
 
     /**
@@ -776,6 +795,77 @@ class TrainingController extends Controller
         return redirect()->to($training->path())->withErrors('We could not find a training interest confirmation for this training. Please contact our technical staff if this issue persists.');
     }
 
+    /**
+     * Self-Assigns the VATITA S1 Entry Exam
+     */
+
+    public function selfAssign(Training $training)
+    {
+        // Fetch the authenticated user
+        $user = Auth::user();
+        $cid = $user->id;
+
+        if (is_null($cid)) {
+            return redirect($training->path())->with('error', 'CID not provided');
+        }
+
+        $schema = [
+            'user_cid' => $cid,
+            'exam_id' => 33, // VATITA S1 Entry Exam
+            'instructor_cid' => 1331404,
+        ];
+
+        // Fetch the user data from the VATEUD API
+        $assigned = $this->_fetchVateud('https://core.vateud.net/api/facility/user/' . $cid);
+
+        if (is_null($assigned['data'])) {
+            return redirect($training->path())->with('error', 'User not found');
+        }
+
+        if ($assigned['data']['rating'] == 1) {
+            // Fetch user's exam results
+            $exams = $this->_fetchVateud('https://core.vateud.net/api/facility/user/' . $cid . '/exams');
+            $examResults = $exams['data']['results'] ?? [];
+
+            foreach ($examResults as $exam) {
+                if ($exam['exam_id'] == 33 && $exam['passed']) {
+                    return redirect($training->path())->with('error', 'User has already passed the VATITA S1 Entry Exam');
+                } elseif ($exam['passed']) {
+                    return redirect($training->path())->with('error', 'User has already passed an exam and does not need to take the VATITA S1 Entry Exam');
+                } elseif ($exam['exam_id'] == 33 && !$exam['passed']) {
+                    $createdAt = Carbon::parse($exam['created_at']);
+                    if ($createdAt->lt(Carbon::now()->subDays(30))) {
+                        return redirect($training->path())->with('error', 'User has already failed the VATITA S1 Entry Exam and is not yet eligible to retake it');
+                    }
+                }
+            }
+
+            // Assign the exam if eligible
+            $r = $this->_postVateud('https://api.vatsim.net/api/facility/training/exams/assign', $schema);
+
+            if ($r['success']) {
+                return redirect($training->path())->with('success', 'User successfully assigned to VATITA S1 Entry Exam');
+            } else {
+                return redirect($training->path())->with('error', 'Internal Server Error');
+            }
+        } else {
+            return redirect($training->path())->with('error', 'User not eligible for VATITA S1 Entry Exam');
+        }
+    }
+
+    private function _fetchVateud($url)
+    {
+        $response = Http::get($url);
+        return $response->json();
+    }
+
+    private function _postVateud($url, $data)
+    {
+        $response = Http::post($url, $data);
+        return $response->json();
+    }
+
+    
     /**
      * Return if the refresh is correct. If not, returns descrepency rating names
      */

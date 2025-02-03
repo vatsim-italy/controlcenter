@@ -65,7 +65,7 @@
             </div>
         </div>
     </div>
-    
+
     <!-- Division card -->
     <div class="col-xl-3 col-md-6 mb-4 d-none d-xl-block d-lg-block d-md-block">
         <div class="card border-left-primary shadow h-100 py-2">
@@ -84,7 +84,7 @@
             </div>
         </div>
     </div>
-    
+
     <!-- ATC Hours card -->
     <div class="col-xl-3 col-md-6 mb-4">
         <div class="card {{ ($atcHours < Setting::get('atcActivityRequirement', 10)) ? 'border-left-danger' : 'border-left-success' }} shadow h-100 py-2">
@@ -101,9 +101,9 @@
             </div>
         </div>
     </div>
-    
-    
-    
+
+
+
     <!-- Last training card -->
     <div class="col-xl-3 col-md-6 mb-4 d-none d-xl-block d-lg-block d-md-block">
         <div class="card border-left-info shadow h-100 py-2">
@@ -124,13 +124,13 @@
             </div>
         </div>
     </div>
-    
+
 </div>
 
 <div class="row">
     <!-- Area Chart -->
     <div class="col-xl-8 col-lg-7 ">
-        
+
         @if(\Auth::user()->isMentor())
         <div class="card shadow mb-4 d-none d-xl-block d-lg-block d-md-block">
             <!-- Card Header - Dropdown -->
@@ -139,7 +139,7 @@
             </div>
             <!-- Card Body -->
             <div class="card-body {{ sizeof($studentTrainings) == 0 ? '' : 'p-0' }}">
-                
+
                 @if (sizeof($studentTrainings) == 0)
                 <p class="mb-0">You have no students.</p>
                 @else
@@ -188,7 +188,7 @@
                                             @else
                                             <span class="{{ ($trainingIntervalExceeded && $training->status != \App\Helpers\TrainingStatus::AWAITING_EXAM->value && !$training->paused_at) ? 'text-danger' : '' }}">{{ $reportDate->diffForHumans(['parts' => 2]) }}</span>
                                             @endif
-                                            
+
                                         </span>
                                     @else
                                         No registered training yet
@@ -203,7 +203,7 @@
             </div>
         </div>
         @endif
-        
+
         <div class="card shadow mb-4">
             <!-- Card Header - Dropdown -->
             <div class="card-header bg-primary py-3 d-flex flex-row align-items-center justify-content-between">
@@ -211,7 +211,7 @@
             </div>
             <!-- Card Body -->
             <div class="card-body {{ $trainings->count() == 0 ? '' : 'p-0' }}">
-                
+
                 @if ($trainings->count() == 0)
                 <p>You have no registered trainings.</p>
                 @else
@@ -263,7 +263,7 @@
             </div>
         </div>
     </div>
-    
+
     <div class="col-xl-8 col-lg-5">
         <div class="card shadow mb-4">
             <!-- Card Header - Dropdown -->
@@ -276,7 +276,7 @@
                     <img class="img-fluid px-3 px-sm-4 mb-4" style="width: 25rem;" src="images/undraw_speech_to_text_vatsim.svg" alt="">
                 </div>
                 <p>Are you interested in becoming an Air Traffic Controller? Wish to receive training for a higher rating? Request training below and you will be notified when a space is available.</p>
-                
+
                 @can('apply', \App\Models\Training::class)
                 <div class="d-grid">
                     <a href="{{ route('training.apply') }}" class="btn btn-success">
@@ -284,7 +284,7 @@
                     </a>
                 </div>
                 @else
-                
+
                 <div class="btn btn-{{ (\Auth::user()->hasActiveTrainings(true) && Setting::get('trainingEnabled')) ? 'success' : 'primary' }} d-block disabled not-allowed" role="button" aria-disabled="true">
                     @if(\Auth::user()->hasActiveTrainings(true) && Setting::get('trainingEnabled'))
                     <i class="fas fa-check"></i>
@@ -293,42 +293,43 @@
                     @endif
                     {{ Gate::inspect('apply', \App\Models\Training::class)->message() }}
                 </div>
-                
+
                 @if(Setting::get('trainingEnabled'))
                 <div class="alert alert-primary" role="alert">
                     <p class="small">
                         <b><i class="fas fa-chevron-right"></i> How do I join the division?</b>
                         <a href="{{ Setting::get('linkJoin') }}" target="_blank">Read about joining here. You will be able to apply here within 24 hours after transfer.</a>
-                        
+
                         <br>
-                        
+
                         <b><i class="fas fa-chevron-right"></i> How to apply to be a visiting controller?</b>
                         <a href="{{ Setting::get('linkVisiting') }}" target="_blank">Check this page for more information.</a>
-                        
+
                         <br>
-                        
+
                         <b><i class="fas fa-chevron-right"></i> My rating is inactive?</b>
                         <a href="{{ Setting::get('linkContact') }}" target="_blank">Contact local training staff for refresh or transfer training.</a>
-                        
+
                         <br>
-                        
+
                         <b><i class="fas fa-chevron-right"></i> How long is the queue?</b>
                         {{ \Auth::user()->getActiveTraining()->area->waiting_time ?? 'Unknown waiting time' }}
                     </p>
                 </div>
                 @endif
-                
+
                 @endcan
             </div>
         </div>
     </div>
-    
-    <div class="col-xl-4 col-md-12 mb-12">
+
+    /*
+      <div class="col-xl-4 col-md-12 mb-12">
             <div class="card shadow mb-4">
                 <div class="card-header bg-primary py-3 d-flex flex-row align-items-center justify-content-between">
                     <h6 class="m-0 fw-bold text-white">
                         Estimated queue lengths
-                    </h6> 
+                    </h6>
                 </div>
                 <div class="card-body p-0">
                     <table class="table table-striped table-sm table-hover table-leftpadded mb-0" width="100%" cellspacing="0">
@@ -339,19 +340,19 @@
                             </tr>
                         </thead>
                         <tbody>
-    
+
                             @foreach($queues as $queue => $time)
                                 <tr>
                                     <td>{{ $queue }}</td>
                                     <td>{{ \Carbon\CarbonInterval::seconds(round($time[0]))->cascade()->forHumans(['parts' => 2]) }} — {{ \Carbon\CarbonInterval::seconds(round($time[1]))->cascade()->forHumans(['parts' => 2]) }}</td>
                                 </tr>
                             @endforeach
-    
+
                         </tbody>
                     </table>
                 </div>
             </div>
         </div>
-
+        */
 </div>
 @endsection

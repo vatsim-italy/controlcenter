@@ -159,9 +159,12 @@ class ReportController extends Controller
      */
     public function feedback()
     {
-        $feedback = Feedback::all()->sortByDesc('created_at');
-
-        return view('reports.feedback', compact('feedback'));
+        if (auth()->user()->isAdmin()) {
+            $feedback = Feedback::all()->sortByDesc('created_at');
+            return view('reports.feedback', compact('feedback'));
+        } else {
+            return abort(403);
+        }
     }
 
     /**

@@ -85,6 +85,8 @@ class UpdateMemberDetails extends Command
                 continue;
             } elseif (config('app.mode') == 'division' && $training->user->division == config('app.owner_code')) {
                 continue;
+            } else if($training->user->isVisiting()) {
+                continue;
             }
 
             // Close the training

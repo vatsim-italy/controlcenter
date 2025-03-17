@@ -24,7 +24,7 @@ class FeedbackController extends Controller
         }
 
         $positions = Position::all();
-        $controllers = User::getActiveAtcMembers();
+        $controllers = User::all();
 
         return view('feedback.create', compact('positions', 'controllers'));
     }

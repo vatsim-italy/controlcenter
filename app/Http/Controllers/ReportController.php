@@ -12,6 +12,7 @@ use App\Models\TrainingActivity;
 use App\Models\TrainingExamination;
 use App\Models\TrainingReport;
 use App\Models\User;
+use App\Services\Sql\Sql;
 use Carbon\Carbon;
 use Carbon\CarbonPeriod;
 use Illuminate\Database\Eloquent\Builder;
@@ -101,8 +102,9 @@ class ReportController extends Controller
                 })->get();
             }
         } else {
+            // The training reports will use updated_at so draft publishing date is correct.
             $activities = TrainingActivity::with('training', 'training.ratings', 'training.user', 'user', 'endorsement')->orderByDesc('created_at')->limit(100)->get();
-            $trainingReports = TrainingReport::where('created_at', '>=', $activities->last()->created_at)->get();
+            $trainingReports = TrainingReport::where('updated_at', '>=', $activities->last()->updated_at)->where('draft', false)->get();
             $examinationReports = TrainingExamination::where('created_at', '>=', $activities->last()->created_at)->get();
         }
 
@@ -218,7 +220,7 @@ class ReportController extends Controller
 
         // Fill the array
         if ($areaFilter) {
-            $data = Training::select([DB::raw('count(id) as `count`'), DB::raw('DATE(created_at) as day')])->groupBy('day')
+            $data = Training::select([DB::raw(Sql::as('count(id)', 'count')), DB::raw(Sql::date('created_at', 'day'))])->groupBy('day')
                 ->where('area_id', $areaFilter)
                 ->where('created_at', '>=', Carbon::now()->subYear(1))
                 ->get();
@@ -228,7 +230,7 @@ class ReportController extends Controller
             }
         } else {
             $data = Training::select([
-                DB::raw('count(id) as `count`'),
+                DB::raw(Sql::as('count(id)', 'count')),
                 DB::raw('DATE(created_at) as day'),
             ])->groupBy('day')
                 ->where('created_at', '>=', Carbon::now()->subYear(1))
@@ -282,7 +284,7 @@ class ReportController extends Controller
 
                 // New requests
                 $query = DB::table('trainings')
-                    ->select(DB::raw('count(trainings.id) as `count`'), DB::raw('MONTH(trainings.created_at) as month'))
+                    ->select(DB::raw(Sql::as('count(trainings.id)', 'count')), DB::raw(Sql::month('trainings.created_at', 'month')))
                     ->join('rating_training', 'trainings.id', '=', 'rating_training.training_id')
                     ->join('ratings', 'ratings.id', '=', 'rating_training.rating_id')
                     ->where('created_at', '>=', date('Y-m-d H:i:s', strtotime('-6 months')))
@@ -297,7 +299,7 @@ class ReportController extends Controller
 
                 // Completed requests
                 $query = DB::table('trainings')
-                    ->select(DB::raw('count(trainings.id) as `count`'), DB::raw('MONTH(trainings.closed_at) as month'))
+                    ->select(DB::raw(Sql::as('count(trainings.id)', 'count')), DB::raw(Sql::month('trainings.closed_at', 'month')))
                     ->join('rating_training', 'trainings.id', '=', 'rating_training.training_id')
                     ->join('ratings', 'ratings.id', '=', 'rating_training.rating_id')
                     ->where('status', -1)
@@ -313,7 +315,7 @@ class ReportController extends Controller
 
                 // Closed requests
                 $query = DB::table('trainings')
-                    ->select(DB::raw('count(trainings.id) as `count`'), DB::raw('MONTH(trainings.closed_at) as month'))
+                    ->select(DB::raw(Sql::as('count(trainings.id)', 'count')), DB::raw(Sql::month('trainings.closed_at', 'month')))
                     ->join('rating_training', 'trainings.id', '=', 'rating_training.training_id')
                     ->join('ratings', 'ratings.id', '=', 'rating_training.rating_id')
                     ->where('status', -2)
@@ -330,7 +332,7 @@ class ReportController extends Controller
 
             // Passed trainings except S1
             $query = DB::table('training_examinations')
-                ->select(DB::raw('count(training_examinations.id) as `count`'), DB::raw('MONTH(training_examinations.examination_date) as month'))
+                ->select(DB::raw(Sql::as('count(training_examinations.id)', 'count')), DB::raw(Sql::month('training_examinations.examination_date', 'month')))
                 ->join('trainings', 'trainings.id', '=', 'training_examinations.training_id')
                 ->whereExists(function ($query) {
                     $query->select(DB::raw(1))
@@ -353,7 +355,7 @@ class ReportController extends Controller
 
             // Failed trainings
             $query = DB::table('training_examinations')
-                ->select(DB::raw('count(training_examinations.id) as `count`'), DB::raw('MONTH(training_examinations.examination_date) as month'))
+                ->select(DB::raw(Sql::as('count(training_examinations.id)', 'count')), DB::raw(Sql::month('training_examinations.examination_date', 'month')))
                 ->join('trainings', 'trainings.id', '=', 'training_examinations.training_id')
                 ->whereExists(function ($query) {
                     $query->select(DB::raw(1))
@@ -384,7 +386,7 @@ class ReportController extends Controller
 
                 // New requests
                 $query = DB::table('trainings')
-                    ->select(DB::raw('count(trainings.id) as `count`'), DB::raw('MONTH(trainings.created_at) as month'))
+                    ->select(DB::raw(Sql::as('count(trainings.id)', 'count')), DB::raw(Sql::month('trainings.created_at', 'month')))
                     ->join('rating_training', 'trainings.id', '=', 'rating_training.training_id')
                     ->join('ratings', 'ratings.id', '=', 'rating_training.rating_id')
                     ->where('created_at', '>=', date('Y-m-d H:i:s', strtotime('-6 months')))
@@ -398,7 +400,7 @@ class ReportController extends Controller
 
                 // Completed requests
                 $query = DB::table('trainings')
-                    ->select(DB::raw('count(trainings.id) as `count`'), DB::raw('MONTH(trainings.closed_at) as month'))
+                    ->select(DB::raw(Sql::as('count(trainings.id)', 'count')), DB::raw(Sql::month('trainings.closed_at', 'month')))
                     ->join('rating_training', 'trainings.id', '=', 'rating_training.training_id')
                     ->join('ratings', 'ratings.id', '=', 'rating_training.rating_id')
                     ->where('status', -1)
@@ -413,7 +415,7 @@ class ReportController extends Controller
 
                 // Closed requests
                 $query = DB::table('trainings')
-                    ->select(DB::raw('count(trainings.id) as `count`'), DB::raw('MONTH(trainings.closed_at) as month'))
+                    ->select(DB::raw(Sql::as('count(trainings.id)', 'count')), DB::raw(Sql::month('trainings.closed_at', 'month')))
                     ->join('rating_training', 'trainings.id', '=', 'rating_training.training_id')
                     ->join('ratings', 'ratings.id', '=', 'rating_training.rating_id')
                     ->where('status', -2)
@@ -429,7 +431,7 @@ class ReportController extends Controller
 
             // Passed trainings
             $query = DB::table('training_examinations')
-                ->select(DB::raw('count(training_examinations.id) as `count`'), DB::raw('MONTH(training_examinations.examination_date) as month'))
+                ->select(DB::raw(Sql::as('count(training_examinations.id)', 'count')), DB::raw(Sql::month('training_examinations.examination_date', 'month')))
                 ->join('trainings', 'trainings.id', '=', 'training_examinations.training_id')
                 ->whereExists(function ($query) {
                     $query->select(DB::raw(1))
@@ -451,7 +453,7 @@ class ReportController extends Controller
 
             // Failed trainings
             $query = DB::table('training_examinations')
-                ->select(DB::raw('count(training_examinations.id) as `count`'), DB::raw('MONTH(training_examinations.examination_date) as month'))
+                ->select(DB::raw(Sql::as('count(training_examinations.id)', 'count')), DB::raw(Sql::month('training_examinations.examination_date', 'month')))
                 ->join('trainings', 'trainings.id', '=', 'training_examinations.training_id')
                 ->whereExists(function ($query) {
                     $query->select(DB::raw(1))

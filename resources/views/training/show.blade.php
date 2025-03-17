@@ -221,7 +221,9 @@
                         </div>
                         @endif
 
-                        <button type="submit" class="btn btn-primary">Save</button>
+                        <button type="submit" id="training-submit-btn" class="btn btn-primary" onclick="handleSubmit(event)">Save
+                            <div class="submit-spinner spinner-border spinner-border-sm" role="status" style="display: none;">&nbsp;</div>
+                        </button>
 
                     </form>
                 </div>
@@ -891,5 +893,15 @@
                 link.setAttribute('target', '_blank');
             });
         });
+    </script>
+
+    <!-- Spinner on submission -->
+    <script>
+        function handleSubmit(event) {
+            event.preventDefault();
+            document.querySelector('.submit-spinner').style.display = 'inherit';
+            event.target.disabled = true;
+            event.target.closest('form').submit();
+        }
     </script>
 @endsection

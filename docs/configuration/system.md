@@ -1,7 +1,7 @@
 # Configure the instance
 
-??? tip "Upgrading from v3.4 to v4.0?"
-    Read the [UPGRADE.md](https://github.com/Vatsim-Scandinavia/controlcenter/blob/v4.0.7/UPGRADE.md) in v4.0 documentation for details about breaking changes and migration notes.
+??? tip "Upgrading to a new major version?"
+    Always read the [release notes](https://github.com/Vatsim-Scandinavia/controlcenter/releases) and [upgrade page](../installation.md) for details about breaking changes and migration notes.
 
 ??? info "Using a container"
     These instructions assume you're using a container. Although most steps are the same if you're running from source, some passages or instructions might not make as much sense.
@@ -273,7 +273,7 @@ Find your own VATSIM CID, and have it ready:
     php artisan user:makeadmin
     ```
 
-You'll be asked to provide a CID and an area that the user is an administrator in. Assuming you change the areas to ones of your own, selecting the first area means you won't need to repeat this process right after customising your subdivision's areas.
+You'll be asked to provide a CID and an area that the user is an administrator in. Assuming you change the areas to ones of your own, selecting the first area means you won't need to repeat this process right after customising your division's areas.
 
 
 ## Next steps

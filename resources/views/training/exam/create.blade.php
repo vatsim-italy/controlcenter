@@ -19,7 +19,11 @@
                                     <th>Vatsim ID</th>
                                     <th>Current Rating</th>
                                     <th>Training Rating</th>
-                                    <th>Subdivision</th>
+                                    @if(config('app.mode') == 'subdivision')
+                                        <th>Subdivision</th>
+                                    @else
+                                        <th>Division</th>
+                                    @endif
                                 </tr>
                             </thead>
                             <tbody>
@@ -35,7 +39,13 @@
                                             @endif
                                         @endforeach
                                     </td>
-                                    <td>{{ $training->user->subdivision }}</td>
+                                    <td>
+                                        @if(config('app.mode') == 'subdivision')
+                                            {{ $training->user->subdivision }}
+                                        @else
+                                            {{ $training->user->division }}
+                                        @endif
+                                    </td>
                                 </tr>
                             </tbody>
                         </table>
@@ -155,7 +165,9 @@
                             </div>
                         </div>
 
-                        <button type="submit" id="training-submit-btn" class="btn btn-success mt-3">Publish examination report</button>
+                        <button type="submit" id="exam-submit-btn" class="btn btn-success mt-3" onclick="handleSubmit(event)">Publish examination report
+                            <div class="submit-spinner spinner-border spinner-border-sm" role="status" style="display: none;">&nbsp;</div>
+                        </button>
                     </form>
                 </div>
             </div>
@@ -187,6 +199,13 @@
         var defaultDate = "{{ old('date') }}"
         document.querySelector('.datepicker').flatpickr({ disableMobile: true, minDate: "{!! date('Y-m-d', strtotime('-1 months')) !!}", maxDate: "{!! date('Y-m-d') !!}", dateFormat: "d/m/Y", defaultDate: defaultDate, locale: {firstDayOfWeek: 1 } });
     })
+
+    function handleSubmit(event) {
+        event.preventDefault();
+        document.querySelector('.submit-spinner').style.display = 'inherit';
+        event.target.disabled = true;
+        event.target.closest('form').submit();
+    }
 </script>
 
 @endsection

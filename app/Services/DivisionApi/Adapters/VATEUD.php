@@ -143,7 +143,7 @@ class VATEUD implements DivisionApiContract
      */
     public function assignTierEndorsement(User $user, Rating $rating, int $requesterId)
     {
-
+        echo $rating->endorsement_type;
         // Check for endorsement type to call correct endpoint, Special Center is not supported
         if ($rating->endorsement_type == 'T1') {
             return $this->callApi('/facility/endorsements/tier-1', 'POST', [
@@ -293,11 +293,10 @@ class VATEUD implements DivisionApiContract
     /**
      * Translate the rating type from the division
      */
-    public function getUserExamRating(int $type)
+    public function getUserExamRating(int $type, int $id)
     {
 
         $rating = 'Unknown';
-
         switch ($type) {
             case 1:
                 $rating = VatsimRating::from($type + 1)->name;
@@ -320,6 +319,16 @@ class VATEUD implements DivisionApiContract
             case 10:
                 $rating = 'C1 Fast Track';
                 break;
+        }
+
+        if ($id == 33) {
+            $rating = 'S1 Entry';
+        } else if ($id == 36) {
+            $rating = 'S2 Entry';
+        } else if ($id == 45) {
+            $rating = 'T1 Milano';
+        } else if ($id == 45) {
+            $rating = 'INS';
         }
 
         return $rating;

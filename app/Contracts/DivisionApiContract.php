@@ -36,7 +36,7 @@ interface DivisionApiContract
 
     public function getUserExams(User $user);
 
-    public function getUserExamRating(int $type);
+    public function getUserExamRating(int $type, int $id);
 
     public function userHasPassedTheoryExam(User $user, Rating $rating);
 

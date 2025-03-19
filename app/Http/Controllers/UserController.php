@@ -165,7 +165,11 @@ class UserController extends Controller
                 foreach ($categories as $exam) {
                     $exam['category'] = $category;
                     $exam['rating'] = DivisionApi::getUserExamRating((int) $exam['flag_exam_type'], $exam['exam_id']);
-                    $exam['created_at'] = Carbon::parse($exam['created_at'])->toEuropeanDate();
+                    if (!empty($exam['reassign_date'])) {
+                        $exam['created_at'] = Carbon::parse($exam['reassign_date'])->toEuropeanDate();
+                    } else {
+                        $exam['created_at'] = Carbon::parse($exam['created_at'])->toEuropeanDate();
+                    }
                     $divisionExams->push($exam);
                 }
             }

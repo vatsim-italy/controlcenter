@@ -318,6 +318,11 @@
 
                         <b><i class="fas fa-chevron-right"></i> How long is the queue?</b>
                         {{ \Auth::user()->getActiveTraining()->area->waiting_time ?? 'Unknown waiting time' }}
+
+                        <br>
+
+                        <b><i class="fas fa-chevron-right"></i> New visitor?</b>
+                        Open a ticket to request a familiarisation training
                     </p>
                 </div>
                 @endif

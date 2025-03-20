@@ -370,7 +370,7 @@
                             <i class="fas fa-flag"></i>
                             @isset($training->created_by)
                                 {{ \App\Models\User::find($training->created_by)->name }} —
-                            @endisset 
+                            @endisset
                             {{ $training->created_at->toEuropeanDateTime() }}
                         </div>
                         <p>
@@ -422,8 +422,66 @@
 
     <div class="col-xl-5 col-md-6 col-sm-12 mb-12">
 
+        <div class="card shadow mb-4">
+            <div class="card-header bg-primary py-3 d-flex flex-row align-items-center justify-content-between">
+                <h6 class="m-0 fw-bold text-white">
+                    Division Exams
+                </h6>
+            </div>
+            <div class="card-body {{ $divisionExams->count() == 0 ? '' : 'p-0' }}">
+
+                @if($divisionExams->count() == 0)
+                    <p class="mb-0">No division exam history</p>
+                @else
+                    <div class="table-responsive">
+                        <table class="table table-sm table-leftpadded mb-0" width="100%" cellspacing="0">
+                            <thead class="table-light">
+                            <tr>
+                                <th>Exam</th>
+                                <th>Created</th>
+                                <th>Status</th>
+                            </tr>
+                            </thead>
+                            <tbody>
+                            @foreach($divisionExams as $exam)
+                                <tr>
+                                    <td>
+                                        {{ $exam['rating'] }}
+                                        @if($exam['category'] == 'reassignments')
+                                            (Retake)
+                                        @endif
+                                    </td>
+                                    <td>
+                                        {{ $exam['created_at'] }}
+                                    </td>
+                                    <td>
+                                        @if($exam['category'] == 'results')
+                                            @if($exam['passed'])
+                                                <i class="fas fa-circle-check text-success"></i>
+                                                Pass {{ $exam['score'] }}%
+                                            @else
+                                                <i class="fas fa-circle-xmark text-danger"></i>
+                                                Fail {{ $exam['score'] }}%
+                                            @endif
+                                        @else
+                                            <i class="fas fa-circle-half-stroke text-warning"></i>
+                                            Pending
+                                        @endif
+                                    </td>
+                                </tr>
+                            @endforeach
+                            </tbody>
+                        </table>
+                    </div>
+                @endif
+
+            </div>
+        </div>
+
+
         <div class="card shadow mb-4 ">
             <div class="card-header bg-primary py-3 d-flex flex-row align-items-center justify-content-between">
+
 
                 @if($training->status >= \App\Helpers\TrainingStatus::PRE_TRAINING->value && $training->status <= \App\Helpers\TrainingStatus::AWAITING_EXAM->value)
                     <h6 class="m-0 fw-bold text-white">
@@ -442,7 +500,7 @@
                         <button class="btn btn-light btn-icon dropdown-toggle" type="button" id="dropdownMenuButton" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
                             <i class="fas fa-plus"></i> Create
                         </button>
-                    
+
                         <div class="dropdown-menu" aria-labelledby="dropdownMenuButton">
                             @can('create', [\App\Models\TrainingReport::class, $training])
                                 @if($training->status >= \App\Helpers\TrainingStatus::PRE_TRAINING->value)

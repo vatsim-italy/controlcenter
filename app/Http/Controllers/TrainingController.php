@@ -414,7 +414,31 @@ class TrainingController extends Controller
         $requestTypes = TaskController::getTypes();
         $requestPopularAssignees = TaskController::getPopularAssignees($training->area);
 
-        return view('training.show', compact('training', 'reportsAndExams', 'trainingMentors', 'statuses', 'types', 'experiences', 'activities', 'trainingInterests', 'activeTrainingInterest', 'relatedTasks', 'requestTypes', 'requestPopularAssignees'));
+        $user = $training->user()->first();
+
+        // Fetch division exams
+        $divisionExams = collect();
+        $userExams = DivisionApi::getUserExams($user);
+        if ($userExams && $userExams->successful()) {
+
+            foreach ($userExams->json()['data'] as $category => $categories) {
+                foreach ($categories as $exam) {
+                    $exam['category'] = $category;
+                    $exam['rating'] = DivisionApi::getUserExamRating((int) $exam['flag_exam_type'], $exam['exam_id']);
+                    if (!empty($exam['reassign_date'])) {
+                        $exam['created_at'] = Carbon::parse($exam['reassign_date'])->toEuropeanDate();
+                    } else {
+                        $exam['created_at'] = Carbon::parse($exam['created_at'])->toEuropeanDate();
+                    }
+                    $divisionExams->push($exam);
+                }
+            }
+
+            // Sort all entries by created_at
+            $divisionExams = $divisionExams->sortByDesc('created_at');
+        }
+
+        return view('training.show', compact('training', 'reportsAndExams', 'trainingMentors', 'statuses', 'types', 'experiences', 'activities', 'trainingInterests', 'activeTrainingInterest', 'relatedTasks', 'requestTypes', 'requestPopularAssignees', 'divisionExams'));
     }
 
     /**

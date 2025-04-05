@@ -45,11 +45,22 @@ class FeedbackController extends Controller
             'position' => 'nullable|exists:positions,callsign',
             'controller' => 'nullable|exists:users,id',
             'feedback' => 'required',
+            'visibilityToggle' => 'nullable',
+            'emailToggle' => 'nullable',
         ]);
 
         $position = isset($data['position']) ? Position::where('callsign', $data['position'])->get()->first() : null;
         $controller = isset($data['controller']) ? User::find($data['controller']) : null;
         $feedback = $data['feedback'];
+        var_dump($data);
+        $visible = false;
+        $followup = false;
+        if ($data['visibilityToggle'] == 'on') {
+            $visible = true;
+        }
+        if ($data['emailToggle'] == 'on') {
+            $followup = true;
+        }
 
         $submitter = auth()->user();
 
@@ -58,12 +69,14 @@ class FeedbackController extends Controller
             'submitter_user_id' => $submitter->id,
             'reference_user_id' => isset($controller) ? $controller->id : null,
             'reference_position_id' => isset($position) ? $position->id : null,
+            'visibility' => $visible,
+            'followup' => $followup,
         ]);
 
         // Forward email if configured
-        if (Setting::get('feedbackForwardEmail')) {
+        /*if (Setting::get('feedbackForwardEmail')) {
             $feedback->notify(new FeedbackNotification($feedback));
-        }
+        }*/
 
         return redirect()->route('dashboard')->with('success', 'Feedback submitted!');
 

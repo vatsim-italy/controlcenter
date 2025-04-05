@@ -33,7 +33,7 @@ class NoOpAdapter implements DivisionApiContract
 
     public function getUserExams($user) {}
 
-    public function getUserExamRating($type) {}
+    public function getUserExamRating($type, int $id) {}
 
     public function userHasPassedTheoryExam($user, $rating)
     {

@@ -7,6 +7,7 @@ use App\Facades\DivisionApi;
 use App\Helpers\Vatsim;
 use App\Models\Area;
 use App\Models\AtcActivity;
+use App\Models\Feedback;
 use App\Models\Group;
 use App\Models\TrainingExamination;
 use App\Models\TrainingReport;
@@ -159,6 +160,16 @@ class UserController extends Controller
         // Fetch division exams
         $divisionExams = collect();
         $userExams = DivisionApi::getUserExams($user);
+
+        $feedback = Feedback::orderBy('created_at', 'desc')->get();
+        $userFeedbacks = [];
+        foreach ($feedback as $item) {
+            if ($user->id == $item->referenceUser?->id && $item->visibility) {
+                $userFeedbacks[] = $item; // Adds the whole Feedback model
+            }
+            // Or access through relationship:
+        }
+
         if ($userExams && $userExams->successful()) {
 
             foreach ($userExams->json()['data'] as $category => $categories) {
@@ -178,7 +189,7 @@ class UserController extends Controller
             $divisionExams = $divisionExams->sortByDesc('created_at');
         }
 
-        return view('user.show', compact('user', 'groups', 'areas', 'trainings', 'statuses', 'types', 'endorsements', 'areas', 'divisionExams', 'atcActivityHours', 'totalHours'));
+        return view('user.show', compact('user', 'groups', 'areas', 'trainings', 'statuses', 'types', 'endorsements', 'areas', 'divisionExams', 'atcActivityHours', 'totalHours', 'userFeedbacks'));
     }
 
     /**

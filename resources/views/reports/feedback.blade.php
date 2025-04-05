@@ -35,6 +35,7 @@
                                 <th data-field="controller" data-sortable="true" data-filter-control="select">Controller</th>
                                 <th data-field="position" data-sortable="true" data-filter-control="select">Position</th>
                                 <th data-field="feedback" data-sortable="false" data-filter-control="input">Feedback</th>
+                                <th data-field="followup" data-sortable="false" data-filter-control="input" class="text-center">Follow Up</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -58,6 +59,13 @@
                                     </td>
                                     <td>
                                         {!! nl2br($f->feedback) !!}
+                                    </td>
+                                    <td class="text-center">
+                                        @if($f->followup == 1)
+                                            <i class="fas fa-check text-success"></i>
+                                        @else
+                                            <i class="fas fa-times text-muted"></i>
+                                        @endif
                                     </td>
                                 </tr>
                             @endforeach

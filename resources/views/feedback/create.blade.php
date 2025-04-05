@@ -9,7 +9,7 @@
             <div class="card-header bg-primary py-3 d-flex flex-row align-items-center justify-content-between">
                 <h6 class="m-0 fw-bold text-white">
                     Submit Feedback
-                </h6> 
+                </h6>
             </div>
             <div class="card-body">
                 <form action="{!! action('FeedbackController@store') !!}" method="POST">
@@ -35,7 +35,7 @@
                     <div class="row mb-4">
                         <div class="col-md-6">
                             <label class="form-label" for="controllers">Controller <small class="form-text"> (Optional)</small></label>
-                            <input 
+                            <input
                                 id="controllers"
                                 class="form-control"
                                 type="text"
@@ -54,14 +54,14 @@
                                     @endbrowser
                                 @endforeach
                             </datalist>
-                            
+
                             @error('controller')
                                 <span class="text-danger">{{ $errors->first('controller') }}</span>
                             @enderror
                         </div>
                         <div class="col-md-6">
                             <label class="form-label" for="positions">Controller's position <small class="form-text"> (Optional)</small></label>
-                            <input 
+                            <input
                                 id="positions"
                                 class="form-control"
                                 type="text"
@@ -95,6 +95,25 @@
                             @enderror
                         </div>
                     </div>
+                    <div class="card shadow-sm mb-4">
+                        <div class="card-body">
+                            <div class="form-check form-switch mb-4">
+                                <input class="form-check-input" type="checkbox" name="visibilityToggle"  id="visibilityToggle" role="switch" checked>
+                                <label class="form-check-label" for="visibilityToggle">
+                                    <span class="fw-semibold">Make visible to controller</span><br>
+                                    <small class="text-muted">Your data will be anonymised</small>
+                                </label>
+                            </div>
+
+                            <div class="form-check form-switch">
+                                <input class="form-check-input" type="checkbox" name="emailToggle" id="emailToggle" role="switch" checked>
+                                <label class="form-check-label" for="emailToggle">
+                                    <span class="fw-semibold">Receive follow-up email</span>
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+
 
                     <button type="submit" class="btn btn-success" onclick="handleSubmit(event)">Submit Feedback
                         <div class="submit-spinner spinner-border spinner-border-sm" role="status" style="display: none;">&nbsp;</div>

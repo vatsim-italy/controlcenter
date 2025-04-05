@@ -38,7 +38,7 @@
                     <dt class="pt-2">ATC Rating</dt>
                     <dd>{{ $user->rating_short }}</dd>
 
-                    
+
                     @if(config('app.mode') == 'subdivision')
                         <dt>Sub/Division</dt>
                         <dd class="separator pb-3">{{ $user->division }} / {{ $user->subdivision }}</dd>
@@ -152,7 +152,7 @@
                         @endcan
                     </div>
                     <div class="card-body {{ $trainings->count() == 0 ? '' : 'p-0' }}">
-        
+
                         @if($trainings->count() == 0)
                             <p class="mb-0">No registered trainings</p>
                         @else
@@ -209,11 +209,11 @@
                                 </table>
                             </div>
                         @endif
-                        
+
                     </div>
                 </div>
             </div>
-        
+
             <div class="col-xl-4 col-lg-12 col-md-12">
                 <div class="card shadow mb-4">
                     <div class="card-header bg-primary py-3 d-flex flex-row align-items-center justify-content-between">
@@ -222,7 +222,7 @@
                         </h6>
                     </div>
                     <div class="card-body {{ $divisionExams->count() == 0 ? '' : 'p-0' }}">
-        
+
                         @if($divisionExams->count() == 0)
                             <p class="mb-0">No division exam history</p>
                         @else
@@ -267,7 +267,7 @@
                                 </table>
                             </div>
                         @endif
-        
+
                     </div>
                 </div>
             </div>
@@ -342,7 +342,7 @@
                                                 <th>Revoked by</th>
                                                 <td>{{ isset($endorsement->revoked_by) ? \App\Models\User::find($endorsement->revoked_by)->name : 'System' }}</td>
                                             </tr>
-                                        @endif                    
+                                        @endif
                                     @elseif($endorsement->type == 'SOLO')
                                         <tr class="spacing">
                                             <th>Rating</th>
@@ -428,7 +428,72 @@
                 </div>
             </div>
         </div>
-        @if (\Illuminate\Support\Facades\Gate::inspect('viewAccess', $user)->allowed())
+        <div class="col-xl-12 col-lg-12 col-md-12 p-0">
+            <div class="card shadow mb-4">
+                <div class="card-header bg-primary py-3 d-flex flex-row align-items-center justify-content-between">
+                    <h6 class="m-0 fw-bold text-white">
+                        <i class="fas fa-comment-dots me-2"></i>Feedbacks
+                    </h6>
+                    @can('create', \App\Models\Feedback::class)
+                        <a href="{{ route('feedback.create', $user->id) }}" class="btn btn-sm btn-light">
+                            <i class="fas fa-plus me-1"></i> Add New
+                        </a>
+                    @endcan
+                </div>
+
+                <div class="card-body p-0">
+                    @if(count($userFeedbacks) == 0)
+                        <div class="text-center py-5">
+                            <i class="fas fa-comment-slash fa-2x text-muted mb-3"></i>
+                            <p class="text-muted mb-0">No feedbacks received yet</p>
+                        </div>
+                    @else
+                        <div class="table-responsive">
+                            <table class="table table-hover table-striped mb-0"
+                                   data-toggle="table"
+                                   data-pagination="true"
+                                   data-page-size="10"
+                                   data-filter-control="true"
+                                   data-sort-reset="true">
+                                <thead class="table-light">
+                                <tr>
+                                    <th data-field="received" data-sortable="true" class="w-15">Date</th>
+                                    <th data-field="position" data-sortable="true" data-filter-control="select" class="w-15">Position</th>
+                                    <th data-field="feedback" data-sortable="false" data-filter-control="input">Feedback</th>
+                                </tr>
+                                </thead>
+                                <tbody>
+                                @foreach($userFeedbacks as $f)
+                                    <tr>
+                                        <td>
+                                        <span class="badge bg-light text-dark">
+                                            {{ $f->created_at->toEuropeanDate() }}
+                                        </span>
+                                        </td>
+                                        <td>
+                                            @isset($f->referencePosition)
+                                                <span class="badge bg-primary">
+                                                {{ $f->referencePosition->callsign }}
+                                            </span>
+                                            @else
+                                                <span class="badge bg-secondary">N/A</span>
+                                            @endisset
+                                        </td>
+                                        <td class="text-truncate" style="max-width: 300px;" data-bs-toggle="tooltip" title="{{ $f->feedback }}">
+                                            {!! nl2br(e($f->feedback)) !!}
+                                        </td>
+                                    </tr>
+                                @endforeach
+                                </tbody>
+                            </table>
+                        </div>
+                    @endif
+                </div>
+            </div>
+        </div>
+
+
+    @if (\Illuminate\Support\Facades\Gate::inspect('viewAccess', $user)->allowed())
             <div class="col-xl-12 col-lg-12 col-md-12 mb-12 p-0">
                 <div class="card shadow mb-4">
                     <div class="card-header bg-primary py-3 d-flex flex-row align-items-center justify-content-between">
@@ -465,7 +530,7 @@
                                                 @else
                                                     <td class="text-center"><input type="checkbox" {{ $user->groups()->where('group_id', $group->id)->where('area_id', $area->id)->count() ? "checked" : "" }} disabled></td>
                                                 @endif
-                                                
+
                                             @endforeach
 
                                         </tr>
@@ -515,7 +580,7 @@
             .then(response => response.json())
             .then(data => {
                 var vatsimHours = document.getElementById("vatsim-data");
-    
+
                 if (data.data) {
                     for (let key in data.data) {
                         if (key === "pilot") {
@@ -532,7 +597,7 @@
                 console.error(error);
                 alert('An error occurred while fetching VATSIM hours data.');
             });
-    </script>    
+    </script>
 
     <!-- Activity chart -->
     <script>
@@ -567,7 +632,7 @@
                         // Define labels and chart data
                         var chartLabels = Object.keys(activity)
                         var chartData = Object.values(activity)
-                    
+
                         // Create the chart
                         var chart = new Chart(
                             document.getElementById('activityChart'),
@@ -585,7 +650,7 @@
                                 },
                             }
                         );
-                        
+
                     } else {
                         document.getElementById('activityChart').parentElement.innerHTML = '<p class="mb-0">No data available</p>'
                     }

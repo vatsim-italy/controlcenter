@@ -164,7 +164,7 @@ class UserController extends Controller
         $feedback = Feedback::orderBy('created_at', 'desc')->get();
         $userFeedbacks = [];
         foreach ($feedback as $item) {
-            if ($user->id == $item->referenceUser?->id && $item->visibility) {
+            if (($user->id == $item->referenceUser?->id) && ($user->isAdmin() || $item->visibility)) {
                 $userFeedbacks[] = $item; // Adds the whole Feedback model
             }
             // Or access through relationship:

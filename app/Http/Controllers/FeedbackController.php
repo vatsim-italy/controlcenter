@@ -52,13 +52,15 @@ class FeedbackController extends Controller
         $position = isset($data['position']) ? Position::where('callsign', $data['position'])->get()->first() : null;
         $controller = isset($data['controller']) ? User::find($data['controller']) : null;
         $feedback = $data['feedback'];
-        var_dump($data);
         $visible = false;
         $followup = false;
-        if ($data['visibilityToggle'] == 'on') {
+        $visible = false;
+        $followup = false;
+            
+        if (isset($data['visibilityToggle']) && $data['visibilityToggle'] == 'on') {
             $visible = true;
         }
-        if ($data['emailToggle'] == 'on') {
+        if (isset($data['emailToggle']) && $data['emailToggle'] == 'on') {
             $followup = true;
         }
 

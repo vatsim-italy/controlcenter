@@ -116,7 +116,7 @@ class UserController extends Controller
     public function show(User $user)
     {
         $this->authorize('view', $user);
-
+        $userAuth =  Auth::user();
         $groups = Group::all();
         $areas = Area::all();
 
@@ -164,7 +164,7 @@ class UserController extends Controller
         $feedback = Feedback::orderBy('created_at', 'desc')->get();
         $userFeedbacks = [];
         foreach ($feedback as $item) {
-            if (($user->id == $item->referenceUser?->id) && ($user->isAdmin() || $item->visibility)) {
+            if (($user->id == $item->referenceUser?->id) && ($userAuth->isAdmin() || $item->visibility)) {
                 $userFeedbacks[] = $item; // Adds the whole Feedback model
             }
             // Or access through relationship:

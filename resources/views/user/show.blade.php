@@ -464,7 +464,7 @@
                                 </thead>
                                 <tbody>
                                 @foreach($userFeedbacks as $f)
-                                    <tr class="{{ $f->visibility ? 'bg-gray' : '' }}">
+                                    <tr class="{{ $f->visibility ? '' : 'bg-gray' }}">
                                         <td>
                                         <span class="badge bg-light text-dark">
                                              @unless($f->visibility)

@@ -464,9 +464,12 @@
                                 </thead>
                                 <tbody>
                                 @foreach($userFeedbacks as $f)
-                                    <tr>
+                                    <tr class="{{ $f->visibility ? 'bg-gray' : '' }}">
                                         <td>
                                         <span class="badge bg-light text-dark">
+                                             @unless($f->visibility)
+                                                <i class="fas fa-fw fa-eye-slash"></i>
+                                            @endunless
                                             {{ $f->created_at->toEuropeanDate() }}
                                         </span>
                                         </td>

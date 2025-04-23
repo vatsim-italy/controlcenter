@@ -76,9 +76,9 @@ class FeedbackController extends Controller
         ]);
 
         // Forward email if configured
-        /*if (Setting::get('feedbackForwardEmail')) {
+        if (Setting::get('feedbackForwardEmail')) {
             $feedback->notify(new FeedbackNotification($feedback));
-        }*/
+        }
 
         return redirect()->route('dashboard')->with('success', 'Feedback submitted!');
 

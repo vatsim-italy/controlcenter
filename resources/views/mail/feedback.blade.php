@@ -5,7 +5,7 @@
 
 {{-- Intro Lines --}}
 @foreach ($textLines as $line)
-    {{ $line }}
+   @markdown($line)
 
 @endforeach
 

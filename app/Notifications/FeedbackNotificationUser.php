@@ -53,20 +53,17 @@ class FeedbackNotificationUser extends Notification implements ShouldQueue
         }
 
         $position = isset($this->feedback->referencePosition) ? $this->feedback->referencePosition->callsign : 'N/A';
+        $feedbackText = str_replace("\n", "\n\n", $this->feedback->feedback); // Ensure paragraphs are spaced
 
         $textLines = [
-            'You have received a new feedback',
-            '___',
-            '**Position**: ' . ($position ? $position : 'N/A'),
-            '___',
-            '**Feedback**',
-            $this->feedback->feedback,
-
+            'You have received new feedback regarding your controlling:',
+            '**Position:** ' . $position,
+            '**Feedback:**',
+            '> ' . $feedbackText, // Blockquote for better readability
         ];
 
-        $feedbackForward = Setting::get('feedbackForwardEmail');
         $id = $this->user->id;
-        return (new FeedbackMail('Feedback received', $textLines, "https://training.vatita.net/user/$id)", "Show all"))
+        return (new FeedbackMail('Feedback received'))
             ->to($this->user->email, $this->user->first_name);
     }
 

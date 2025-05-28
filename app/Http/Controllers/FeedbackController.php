@@ -7,6 +7,7 @@ use App\Models\Feedback;
 use App\Models\Position;
 use App\Models\User;
 use App\Notifications\FeedbackNotification;
+use App\Notifications\FeedbackNotificationUser;
 use Illuminate\Http\Request;
 
 class FeedbackController extends Controller
@@ -56,7 +57,7 @@ class FeedbackController extends Controller
         $followup = false;
         $visible = false;
         $followup = false;
-            
+
         if (isset($data['visibilityToggle']) && $data['visibilityToggle'] == 'on') {
             $visible = true;
         }
@@ -74,6 +75,11 @@ class FeedbackController extends Controller
             'visibility' => $visible,
             'followup' => $followup,
         ]);
+
+
+        if($controller && $visible) {
+            $controller->notify(new FeedbackNotificationUser($controller, $feedback));
+        }
 
         // Forward email if configured
         if (Setting::get('feedbackForwardEmail')) {

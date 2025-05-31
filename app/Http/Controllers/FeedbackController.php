@@ -55,8 +55,6 @@ class FeedbackController extends Controller
         $feedback = $data['feedback'];
         $visible = false;
         $followup = false;
-        $visible = false;
-        $followup = false;
 
         if (isset($data['visibilityToggle']) && $data['visibilityToggle'] == 'on') {
             $visible = true;

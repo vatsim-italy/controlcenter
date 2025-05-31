@@ -43,7 +43,7 @@ class FeedbackNotificationUser extends Notification implements ShouldQueue
      * Get the mail representation of the notification.
      *
      * @param  mixed  $notifiable
-     * @return EndorsementMail
+     * @return FeedbackMail
      */
     public function toMail($notifiable)
     {
@@ -63,7 +63,7 @@ class FeedbackNotificationUser extends Notification implements ShouldQueue
         ];
 
         $id = $this->user->id;
-        return (new FeedbackMail('Feedback received'))
+        return (new FeedbackMail('Feedback received', $textLines))
             ->to($this->user->email, $this->user->first_name);
     }
 

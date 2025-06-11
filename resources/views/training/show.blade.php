@@ -180,7 +180,7 @@
                             @endif
 
                             <label class="form-label" for="trainingStateSelect">Select training state</label>
-                            <select class="form-select" name="status" id="trainingStateSelect" @if(!Auth::user()->isModeratorOrAbove()) disabled @endif>
+                            <select class="form-select" name="status" id="trainingStateSelect" @if(!Auth::user()->isMentorOrAbove()) disabled @endif>
                                 @foreach($statuses as $id => $data)
                                     @if($data["assignableByStaff"])
                                         @if($id == $training->status)

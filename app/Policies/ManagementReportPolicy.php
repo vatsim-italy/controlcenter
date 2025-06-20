@@ -40,7 +40,7 @@ class ManagementReportPolicy
      */
     public function viewFeedback(User $user)
     {
-        return $user->isModeratorOrAbove();
+        return $user->isAdmin();
     }
 
     /**

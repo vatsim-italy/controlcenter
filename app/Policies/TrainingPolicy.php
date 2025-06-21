@@ -64,7 +64,7 @@ class TrainingPolicy
     public function togglePreTrainingCompleted(User $user, Training $training)
     {
         return $training->status == TrainingStatus::PRE_TRAINING->value &&
-                ($training->pre_training_completed == false || $user->isModeratorOrAbove($training->area));
+                ($user->isModeratorOrAbove($training->area));
     }
 
     /**

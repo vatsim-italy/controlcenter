@@ -33,7 +33,7 @@ class TrainingPolicy
      */
     public function update(User $user, Training $training)
     {
-        return $user->isMentorOrAbove($training->area);
+        return $user->isModeratorOrAbove($training->area);
     }
 
     /**

@@ -441,6 +441,7 @@
                     @endcan
                 </div>
 
+                @if(Auth::user()->isAdmin())
                 <div class="card-body p-0">
                     @if(count($userFeedbacks) == 0)
                         <div class="text-center py-5">
@@ -492,6 +493,7 @@
                         </div>
                     @endif
                 </div>
+                @endif
             </div>
         </div>
 

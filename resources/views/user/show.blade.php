@@ -428,6 +428,7 @@
                 </div>
             </div>
         </div>
+    @if(Auth::user()->isAdmin() || Auth::user()->id == $user->id)
         <div class="col-xl-12 col-lg-12 col-md-12 p-0">
             <div class="card shadow mb-4">
                 <div class="card-header bg-primary py-3 d-flex flex-row align-items-center justify-content-between">
@@ -441,7 +442,6 @@
                     @endcan
                 </div>
 
-                @if(Auth::user()->isAdmin())
                 <div class="card-body p-0">
                     @if(count($userFeedbacks) == 0)
                         <div class="text-center py-5">

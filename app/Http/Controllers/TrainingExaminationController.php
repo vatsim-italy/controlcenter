@@ -38,14 +38,26 @@ class TrainingExaminationController extends Controller
             return redirect(null, 400)->to($training->path())->withSuccess('Training examination cannot be created for a training not awaiting exam.');
         }
 
-        $positions = Position::all();
+        // Get the last rating (e.g. "S2" or "S3")
+        $lastRating = $training->ratings->last()->name;
+
+        $ratingMap = [
+            'S2' => 3,
+            'S3' => 4,
+            'C1' => 5,
+        ];
+
+        $ratingNumber = $ratingMap[$lastRating] ?? null;
+
+        $positions = Position::where('rating', '=', $ratingNumber)->get();
+
+
+        $examiners = $training->area->mentors->sortBy('name');
         $taskRecipients = collect(Group::admins()->merge(Group::moderators()));
         $taskPopularAssignees = TaskController::getPopularAssignees($training->area);
 
-        // Keep the onetimekey for another request
-        $request->session()->reflash();
-
-        return view('training.exam.create', compact('training', 'positions', 'taskRecipients', 'taskPopularAssignees'));
+        $examFields = config('pdf')[$lastRating] ?? [];
+        return view('training.exam.create', compact('training', 'positions', 'taskRecipients', 'taskPopularAssignees', 'examiners', 'examFields', 'lastRating'));
     }
 
     /**
@@ -64,7 +76,7 @@ class TrainingExaminationController extends Controller
         $pass = strtolower($data['result']) == 'passed' ? true : false;
 
         // Attempt Division API sync first if the training has VATSIM ratings and it's an S2+ examination
-        if ($request->file('files') && $training->hasVatsimRatings() && $training->getHighestVatsimRating()->vatsim_rating >= VatsimRating::S2->value) {
+        /*if ($request->file('files') && $training->hasVatsimRatings() && $training->getHighestVatsimRating()->vatsim_rating >= VatsimRating::S2->value) {
             foreach ($request->file('files') as $file) {
                 $response = DivisionApi::uploadExamResults($training->user->id, Auth::id(), $pass, $position->callsign, $file->getRealPath());
                 if ($response && $response->failed()) {
@@ -72,6 +84,7 @@ class TrainingExaminationController extends Controller
                 }
             }
         }
+        */
 
         // Save locally
         $examination = TrainingExamination::create([
@@ -81,10 +94,10 @@ class TrainingExaminationController extends Controller
             'examination_date' => $date->format('Y-m-d'),
         ]);
 
+
         if (array_key_exists('result', $data)) {
             $examination->update(['result' => $data['result']]);
         }
-
         $attachmentId = TrainingObjectAttachmentController::saveAttachments($request, $examination);
         $attachmentUrl = (isset($attachmentId[0])) ? route('training.object.attachment.show', ['attachment' => $attachmentId[0]]) : null;
 

@@ -76,15 +76,14 @@ class TrainingExaminationController extends Controller
         $pass = strtolower($data['result']) == 'passed' ? true : false;
 
         // Attempt Division API sync first if the training has VATSIM ratings and it's an S2+ examination
-        /*if ($request->file('files') && $training->hasVatsimRatings() && $training->getHighestVatsimRating()->vatsim_rating >= VatsimRating::S2->value) {
+        if ($request->file('files') && $training->hasVatsimRatings() && $training->getHighestVatsimRating()->vatsim_rating >= VatsimRating::S2->value) {
             foreach ($request->file('files') as $file) {
                 $response = DivisionApi::uploadExamResults($training->user->id, Auth::id(), $pass, $position->callsign, $file->getRealPath());
                 if ($response && $response->failed()) {
                     return redirect()->back()->withErrors('Please try uploading the examination again. Failed to upload exam results to the Division API: ' . $response->json()['message']);
                 }
             }
-        }
-        */
+        } 
 
         // Save locally
         $examination = TrainingExamination::create([

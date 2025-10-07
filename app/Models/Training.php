@@ -253,4 +253,10 @@ class Training extends Model
     {
         return $this->hasMany(OneTimeLink::class);
     }
+
+    public function evaluations()
+    {
+        return $this->hasMany(Evaluation::class, 'training_id', 'id');
+    }
+
 }

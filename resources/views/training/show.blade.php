@@ -537,8 +537,59 @@
                                 No training reports yet.
                             </div>
                         @else
+                            @foreach($reportsNew as $report)
 
-                            @foreach($reportsAndExams as $reportModel)
+                                @php
+                                    $uuid = "instance-".Ramsey\Uuid\Uuid::uuid4();
+                                @endphp
+
+                                <div class="card">
+                                    <div class="card-header p-0">
+                                        <h5 class="mb-0">
+                                            <button class="btn btn-link" type="button" data-bs-toggle="collapse" data-bs-target="#{{ $uuid }}" aria-expanded="true">
+                                                <i class="fas fa-fw fa-chevron-right me-2"></i>{{ \Carbon\Carbon::parse($report->date)->format('d/m/Y') }}
+                                                @if($report->draft)
+                                                    <span class='badge bg-danger'>Draft</span>
+                                                @endif
+                                            </button>
+                                        </h5>
+                                    </div>
+
+                                    <div id="{{ $uuid }}" class="collapse" data-bs-parent="#reportAccordion">
+                                        <div class="card-body">
+
+                                            <small class="text-muted">
+                                                @if(isset($report->position))
+                                                    <i class="fas fa-map-marker-alt"></i> {{ $report->position }}&emsp;
+                                                @endif
+                                                <i class="fas fa-user-edit"></i> {{ optional($report->examiner)->name ?? 'Unknown' }}
+                                                @can('update', $report)
+                                                    <a class="float-end" href="{{ route('training.report.edit', $report->eval_id) }}"><i class="fa fa-pen-square"></i> Edit</a>
+                                                @endcan
+                                            </small>
+
+                                            @php
+                                                $votes = $report->results->pluck('vote'); // collect all votes
+                                                $countG = $votes->filter(fn($v) => $v === 'G')->count();
+                                                $countS = $votes->filter(fn($v) => $v === 'S')->count();
+                                                $countI = $votes->filter(fn($v) => $v === 'I')->count();
+                                            @endphp
+                                            {{-- Evaluation results --}}
+                                            <div class="mt-2">
+                                                <strong>Evaluation Summary:</strong>
+                                                <span class="badge bg-success">G: {{ $countG }}</span>
+                                                <span class="badge bg-warning text-dark">S: {{ $countS }}</span>
+                                                <span class="badge bg-danger">I: {{ $countI }}</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                            @endforeach
+
+
+
+                        @foreach($reportsAndExams as $reportModel)
                                 @if(is_a($reportModel, '\App\Models\TrainingReport'))
 
                                     @if(!$reportModel->draft || $reportModel->draft && \Auth::user()->isMentorOrAbove())
@@ -555,6 +606,8 @@
                                                         @if($reportModel->draft)
                                                             <span class='badge bg-danger'>Draft</span>
                                                         @endif
+                                                        <span class="badge bg-secondary">OLD</span>
+
                                                     </button>
                                                 </h5>
                                             </div>
@@ -568,7 +621,9 @@
                                                         @endif
                                                         <i class="fas fa-user-edit"></i> {{ isset(\App\Models\User::find($reportModel->written_by_id)->name) ? \App\Models\User::find($reportModel->written_by_id)->name : "Unknown"  }}
                                                         @can('update', $reportModel)
-                                                            <a class="float-end" href="{{ route('training.report.edit', $reportModel->id) }}"><i class="fa fa-pen-square"></i> Edit</a>
+                                                                <span class="float-end text-muted" style="pointer-events: none; cursor: default;">
+                                                                    <i class="fa fa-pen-square"></i> Edit
+                                                                </span>
                                                         @endcan
                                                     </small>
 

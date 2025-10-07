@@ -4,7 +4,7 @@
 @section('content')
 
 <div class="row">
-    <div class="col-xl-5 col-lg-12 col-md-12 mb-12">
+    <div class="col-12 mb-4">
         <div class="card shadow mb-4">
             <div class="card-header bg-primary py-3 d-flex flex-row align-items-center justify-content-between">
                 <h6 class="m-0 fw-bold text-white">
@@ -56,33 +56,43 @@
                         @enderror
                     </div>
 
-                    <div class="mb-3">
-                        <label class="form-label" for="contentBox">Report</label>
-                        <textarea class="form-control @error('content') is-invalid @enderror" name="content" id="contentBox" rows="8" placeholder="Write the report here.">{{ old('content') }}</textarea>
-                        @error('content')
-                            <span class="text-danger">{{ $errors->first('content') }}</span>
-                        @enderror
-                    </div>
+                    @foreach($itemsByCategory as $category => $items)
+                        <h5 class="mt-4">{{ $category }}</h5>
+                        <table class="table table-bordered">
+                            <thead>
+                            <tr>
+                                <th style="width: 60%;">Description</th>
+                                <th style="width: 8%;">Vote</th>
+                                <th style="width: 32%;">Comment</th>
+                            </tr>
+                            </thead>
+                            <tbody>
+                            @foreach($items as $item)
+                                <tr>
+                                    <td>{{ $item->description }}</td>
+                                    <td class="text-center">
+                                        <select class="form-select form-select-sm vote-select"
+                                                name="results[{{ $item->item_id }}][vote]"
+                                                >
+                                            <option value="">Select</option>
+                                            <option value="I" {{ (old('results.'.$item->item_id.'.vote') ?? $results[$item->item_id]->vote ?? '') == 'I' ? 'selected' : '' }}>I</option>
+                                            <option value="S" {{ (old('results.'.$item->item_id.'.vote') ?? $results[$item->item_id]->vote ?? '') == 'S' ? 'selected' : '' }}>S</option>
+                                            <option value="G" {{ (old('results.'.$item->item_id.'.vote') ?? $results[$item->item_id]->vote ?? '') == 'G' ? 'selected' : '' }}>G</option>
+                                        </select>
+                                    </td>
+                                    <td>
+                                         <textarea class="form-control comment-textarea"
+                                                   name="results[{{ $item->item_id }}][comment]"
+                                                   maxlength="255"
+                                                   rows="1"
+                                                   placeholder="Enter comment...">{{ old('results.'.$item->item_id.'.comment') ?? $results[$item->item_id]->comment ?? '' }}</textarea>
+                                    </td>
+                                </tr>
+                            @endforeach
+                            </tbody>
+                        </table>
 
-                    <div class="mb-3">
-                        <label class="form-label" for="contentimprove">Areas to improve</label>
-                        <textarea class="form-control @error('contentimprove') is-invalid @enderror" name="contentimprove" id="contentimprove" rows="4" placeholder="In which areas do the student need to improve?">{{ old('contentimprove') }}</textarea>
-                        @error('contentimprove')
-                            <span class="text-danger">{{ $errors->first('contentimprove') }}</span>
-                        @enderror
-                    </div>
-
-                    <div class="mb-3">
-                        <label class="form-label" for="attachments">Attachments</label>
-                        <div>
-                            <input type="file" name="files[]" id="add-file" class="@error('file') is-invalid @enderror" accept=".pdf, .xls, .xlsx, .doc, .docx, .txt, .png, .jpg, .jpeg" multiple>
-                        </div>
-                        @error('files')
-                            <span class="text-danger">{{ $errors->first('files') }}</span>
-                        @enderror
-                    </div>
-
-                    <hr>
+                    @endforeach                    <hr>
 
                     @if(session()->get('onetimekey') == null)
                         <div class="mb-3 form-check">
@@ -111,7 +121,7 @@
 <script>
     document.addEventListener("DOMContentLoaded", function () {
         var defaultDate = "{{ old('report_date') }}"
-        document.querySelector('.datepicker').flatpickr({ disableMobile: true, minDate: "{!! date('Y-m-d', strtotime('-1 months')) !!}", maxDate: "{!! date('Y-m-d') !!}", dateFormat: "d/m/Y", defaultDate: defaultDate, locale: {firstDayOfWeek: 1 } });  
+        document.querySelector('.datepicker').flatpickr({ disableMobile: true, minDate: "{!! date('Y-m-d', strtotime('-1 months')) !!}", maxDate: "{!! date('Y-m-d') !!}", dateFormat: "d/m/Y", defaultDate: defaultDate, locale: {firstDayOfWeek: 1 } });
     });
 </script>
 
@@ -119,17 +129,17 @@
 @vite(['resources/js/easymde.js', 'resources/sass/easymde.scss'])
 <script>
     document.addEventListener("DOMContentLoaded", function () {
-        var simplemde1 = new EasyMDE({ 
-            element: document.getElementById("contentBox"), 
-            status: false, 
+        var simplemde1 = new EasyMDE({
+            element: document.getElementById("contentBox"),
+            status: false,
             toolbar: ["bold", "italic", "heading-3", "|", "quote", "unordered-list", "ordered-list", "|", "link", "preview", "side-by-side", "fullscreen", "|", "guide"],
             insertTexts: {
                 link: ["[","](link)"],
             }
         });
-        var simplemde2 = new EasyMDE({ 
-            element: document.getElementById("contentimprove"), 
-            status: false, 
+        var simplemde2 = new EasyMDE({
+            element: document.getElementById("contentimprove"),
+            status: false,
             toolbar: ["bold", "italic", "heading-3", "|", "quote", "unordered-list", "ordered-list", "|", "link", "preview", "side-by-side", "fullscreen", "|", "guide"],
             insertTexts: {
                 link: ["[","](link)"],
@@ -151,6 +161,37 @@
             }
         });
     })
+
+
+    document.addEventListener('DOMContentLoaded', function() {
+        const voteSelects = document.querySelectorAll('.vote-select');
+
+        function updateColor(select) {
+            const val = select.value;
+            if(val === 'I') {
+                select.style.backgroundColor = '#dc3545'; // red
+                select.style.color = '#fff';
+                select.style.fontWeight = 'bold';
+            } else if(val === 'S') {
+                select.style.backgroundColor = '#90ee90'; // yellow
+                select.style.color = '#000';
+                select.style.fontWeight = 'bold';
+            } else if(val === 'G') {
+                select.style.backgroundColor = '#198754'; // green
+                select.style.color = '#fff';
+                select.style.fontWeight = 'bold';
+            } else {
+                select.style.backgroundColor = '';
+                select.style.color = '';
+            }
+        }
+
+        voteSelects.forEach(select => {
+            updateColor(select); // initial color
+            select.addEventListener('change', () => updateColor(select));
+        });
+    });
+
 </script>
 
 @endsection

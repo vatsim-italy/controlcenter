@@ -3,6 +3,9 @@
 namespace App\Http\Controllers;
 
 use App\Helpers\TrainingStatus;
+use App\Models\Evaluation;
+use App\Models\EvaluationItem;
+use App\Models\EvaluationResult;
 use App\Models\OneTimeLink;
 use App\Models\Position;
 use App\Models\Training;
@@ -47,12 +50,24 @@ class TrainingReportController extends Controller
             return redirect(null, 400)->back()->withErrors('Training report cannot be created for a training not in progress.');
         }
 
-        $positions = Position::all();
+        $lastRating = $training->ratings->last()->name;
+        $ratingMap = [
+            'S1' => 2,
+            'S2' => 3,
+            'S3' => 4,
+            'C1' => 5,
+        ];
+
+        $ratingNumber = $ratingMap[$lastRating] ?? null;
+
+        $positions = Position::where('rating', '=', $ratingNumber)->get();
+        $evaluationItems = EvaluationItem::where('rating', $lastRating)->get();
+        $itemsByCategory = $evaluationItems->groupBy('category');
 
         // Keep the onetimekey for another request
         $request->session()->reflash();
 
-        return view('training.report.create', compact('training', 'positions'));
+        return view('training.report.create', compact('training', 'positions', 'evaluationItems', 'itemsByCategory'));
     }
 
     /**
@@ -71,24 +86,50 @@ class TrainingReportController extends Controller
         $data['written_by_id'] = Auth::id();
         $data['training_id'] = $training->id;
 
+        $date = Carbon::createFromFormat('d/m/Y', $data['report_date'])->format('Y-m-d');
+
+        $evaluation = Evaluation::create([
+            'student_id' => $training->user->id,
+            'level' => $training->ratings->last()->name,
+            'date' => $date,
+            'position' => $data['position'],
+            'examiner_id' => Auth::id(),
+            'training_id' => $training->id,
+        ]);
+
+        if (!empty($data['results']) && is_array($data['results'])) {
+            foreach ($data['results'] as $key => $item) {
+                $itemId = $item['id'] ?? $key;
+
+                EvaluationResult::create([
+                    'eval_id' => $evaluation->eval_id,
+                    'item_id' => $itemId,
+                    'vote' => $item['vote'] ?? '',
+                    'comment' => $item['comment'] ?? '',
+                ]);
+            }
+        }
+
         if (isset($data['report_date'])) {
             $data['report_date'] = Carbon::createFromFormat('d/m/Y', $data['report_date'])->format('Y-m-d H:i:s');
         }
 
-        (isset($data['draft'])) ? $data['draft'] = true : $data['draft'] = false;
-
         // Remove attachments , they are added in next step
         unset($data['files']);
-        $report = TrainingReport::create($data);
+        unset($data['results']); // remove it before creating the TrainingReport
+        $data['content'] = "";
+        $data['contentimprove'] = "";
+
+        /*$report = TrainingReport::create($data);
 
         // Add attachments
         TrainingObjectAttachmentController::saveAttachments($request, $report);
 
         // Notify student of new training request if it's not a draft
         if ($report->draft != true && $training->user->setting_notify_newreport) {
-            $training->user->notify(new TrainingReportNotification($training, $report));
+        //    $training->user->notify(new TrainingReportNotification($training, $report));
         }
-
+        */
         if (($key = session()->get('onetimekey')) != null) {
             // Remove the link
             OneTimeLink::where('key', $key)->delete();
@@ -117,14 +158,30 @@ class TrainingReportController extends Controller
      *
      * @throws \Illuminate\Auth\Access\AuthorizationException
      */
-    public function edit(TrainingReport $report)
+    public function edit(Evaluation $evaluation)
     {
-        $this->authorize('update', $report);
+        $this->authorize('update', $evaluation);
 
-        $positions = Position::all();
+        $training = $evaluation->training;
+        $lastRating = $training->ratings->last()->name;
+        $ratingMap = [
+            'S1' => 2,
+            'S2' => 3,
+            'S3' => 4,
+            'C1' => 5,
+        ];
+        $ratingNumber = $ratingMap[$lastRating] ?? null;
 
-        return view('training.report.edit', compact('report', 'positions'));
+        $positions = Position::where('rating', $ratingNumber)->get();
+        $evaluationItems = EvaluationItem::where('rating', $lastRating)->get();
+        $itemsByCategory = $evaluationItems->groupBy('category');
+
+        $results = $evaluation->results()->with('item')->get()->keyBy('item_id');
+
+        return view('training.report.edit', compact('evaluation', 'positions', 'training', 'itemsByCategory', 'results'));
     }
+
+
 
     /**
      * Update the specified resource in storage.
@@ -133,28 +190,38 @@ class TrainingReportController extends Controller
      *
      * @throws \Illuminate\Auth\Access\AuthorizationException
      */
-    public function update(Request $request, TrainingReport $report)
+    public function update(Request $request, Evaluation $evaluation)
     {
-        $this->authorize('update', $report);
-        $oldDraftStatus = $report->fresh()->draft;
+        $this->authorize('update', $evaluation);
 
         $data = $this->validateRequest();
 
+        // Update evaluation date if provided
         if (isset($data['report_date'])) {
-            $data['report_date'] = Carbon::createFromFormat('d/m/Y', $data['report_date'])->format('Y-m-d H:i:s');
+            $evaluation->date = Carbon::createFromFormat('d/m/Y', $data['report_date'])->format('Y-m-d');
         }
 
-        (isset($data['draft'])) ? $data['draft'] = true : $data['draft'] = false;
+        // Update other fields
+        $evaluation->position = $data['position'] ?? $evaluation->position;
 
-        $report->update($data);
+        $evaluation->save();
 
-        // Notify student of new training request if it's not a draft anymore
-        if ($oldDraftStatus == true && $report->draft == false && $report->training->user->setting_notify_newreport) {
-            $report->training->user->notify(new TrainingReportNotification($report->training, $report));
+        // Update individual results
+        if (!empty($data['results']) && is_array($data['results'])) {
+            foreach ($data['results'] as $itemId => $resultData) {
+                $result = $evaluation->results()->where('item_id', $itemId)->first();
+                if ($result) {
+                    $result->vote = $resultData['vote'] ?? $result->vote;
+                    $result->comment = $resultData['comment'] ?? $result->comment;
+                    $result->save();
+                }
+            }
         }
 
-        return redirect()->intended(route('training.show', $report->training->id))->withSuccess('Training report successfully updated');
+        return redirect()->intended(route('training.show', $evaluation->training_id))
+            ->withSuccess('Evaluation successfully updated');
     }
+
 
     /**
      * Remove the specified resource from storage.
@@ -180,13 +247,11 @@ class TrainingReportController extends Controller
     protected function validateRequest()
     {
         return request()->validate([
-            'content' => 'sometimes|required',
-            'contentimprove' => 'nullable',
             'report_date' => 'required|date_format:d/m/Y',
             'position' => 'nullable',
-            'draft' => 'sometimes',
-            'files.*' => 'sometimes|file|mimes:pdf,xls,xlsx,doc,docx,txt,png,jpg,jpeg|max:10240',
-            'contentimprove' => 'sometimes|nullable|string',
+            'results' => 'required|array',
+            'results.*.vote' => 'nullable|in:I,S,G',
+            'results.*.comment' => 'nullable|string|max:255',
         ]);
     }
 }

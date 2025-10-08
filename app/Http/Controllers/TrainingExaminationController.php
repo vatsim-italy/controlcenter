@@ -83,7 +83,7 @@ class TrainingExaminationController extends Controller
                     return redirect()->back()->withErrors('Please try uploading the examination again. Failed to upload exam results to the Division API: ' . $response->json()['message']);
                 }
             }
-        } 
+        }
 
         // Save locally
         $examination = TrainingExamination::create([

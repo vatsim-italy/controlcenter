@@ -33,7 +33,15 @@ class EvaluationPolicy
      */
     public function view(User $user, Evaluation $ev)
     {
-        return $ev->training->mentors->contains($user) || // If the user is a mentor of the training
+        $isTrainee = $user->is($ev->training->user);
+
+        return
+            (
+                // Mentors can see all, but not drafts of their own training
+                $ev->training->mentors->contains($user)
+                && !($isTrainee && $ev->draft)
+            ) || 
+            $ev->training->mentors->contains($user) || // If the user is a mentor of the training
             $user->id === $ev->examiner_id ||               // If the user is the author of the evaluation
             $user->isAdmin() ||
             $user->isModerator($ev->training->area) ||

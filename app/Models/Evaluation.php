@@ -21,7 +21,15 @@ class Evaluation extends Model
         'examiner_id',
         'level',
         'date',
+        'start',
+        'end',
         'position',
+        'sessionPerformed',
+        'complexity',
+        'workload',
+        'trafficLoad',
+        'trainingPhase',
+        'finalReview',
     ];
 
     // Relationships

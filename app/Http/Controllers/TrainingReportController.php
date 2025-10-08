@@ -80,6 +80,7 @@ class TrainingReportController extends Controller
      */
     public function store(Request $request, Training $training)
     {
+
         $this->authorize('create', [TrainingReport::class, $training]);
 
         $data = $this->validateRequest();
@@ -95,11 +96,19 @@ class TrainingReportController extends Controller
             'position' => $data['position'],
             'examiner_id' => Auth::id(),
             'training_id' => $training->id,
+            'start' => $data['startTime'],
+            'end' => $data['endTime'],
+            'sessionPerformed' => $data['sessionPerformed'],
+            'complexity' => $data['complexity'],
+            'workload' => $data['workload'],
+            'trafficLoad' => $data['trafficLoad'],
+            'trainingPhase' => $data['trainingPhase'],
+            'finalReview' => $data['finalReview'] ?? '',
         ]);
 
-        if (!empty($data['results']) && is_array($data['results'])) {
+        if (! empty($data['results']) && is_array($data['results'])) {
             foreach ($data['results'] as $key => $item) {
-                $itemId = $item['id'] ?? $key;
+                $itemId = $key;
 
                 EvaluationResult::create([
                     'eval_id' => $evaluation->eval_id,
@@ -117,8 +126,8 @@ class TrainingReportController extends Controller
         // Remove attachments , they are added in next step
         unset($data['files']);
         unset($data['results']); // remove it before creating the TrainingReport
-        $data['content'] = "";
-        $data['contentimprove'] = "";
+        $data['content'] = '';
+        $data['contentimprove'] = '';
 
         /*$report = TrainingReport::create($data);
 
@@ -146,9 +155,28 @@ class TrainingReportController extends Controller
      *
      * @return \Illuminate\Http\Response
      */
-    public function show(TrainingReport $trainingReport)
+    public function show(Evaluation $evaluation)
     {
-        //
+        $this->authorize('view', $evaluation);
+
+        $training = $evaluation->training;
+        $lastRating = $training->ratings->last()->name;
+        $ratingMap = [
+            'S1' => 2,
+            'S2' => 3,
+            'S3' => 4,
+            'C1' => 5,
+        ];
+        $ratingNumber = $ratingMap[$lastRating] ?? null;
+
+        $positions = Position::where('rating', $ratingNumber)->get();
+        $evaluationItems = EvaluationItem::where('rating', $lastRating)->get();
+        $itemsByCategory = $evaluationItems->groupBy('category');
+
+        $results = $evaluation->results()->with('item')->get()->keyBy('item_id');
+
+        return view('training.report.show', compact('evaluation', 'positions', 'training', 'itemsByCategory', 'results'));
+
     }
 
     /**
@@ -181,8 +209,6 @@ class TrainingReportController extends Controller
         return view('training.report.edit', compact('evaluation', 'positions', 'training', 'itemsByCategory', 'results'));
     }
 
-
-
     /**
      * Update the specified resource in storage.
      *
@@ -195,7 +221,7 @@ class TrainingReportController extends Controller
         $this->authorize('update', $evaluation);
 
         $data = $this->validateRequest();
-
+        echo json_encode($data, JSON_PRETTY_PRINT);
         // Update evaluation date if provided
         if (isset($data['report_date'])) {
             $evaluation->date = Carbon::createFromFormat('d/m/Y', $data['report_date'])->format('Y-m-d');
@@ -204,10 +230,9 @@ class TrainingReportController extends Controller
         // Update other fields
         $evaluation->position = $data['position'] ?? $evaluation->position;
 
-        $evaluation->save();
 
         // Update individual results
-        if (!empty($data['results']) && is_array($data['results'])) {
+        if (! empty($data['results']) && is_array($data['results'])) {
             foreach ($data['results'] as $itemId => $resultData) {
                 $result = $evaluation->results()->where('item_id', $itemId)->first();
                 if ($result) {
@@ -217,6 +242,19 @@ class TrainingReportController extends Controller
                 }
             }
         }
+
+
+        $evaluation->start = $data['startTime'] ?? $evaluation->start;
+        $evaluation->end = $data['endTime'] ?? $evaluation->end;
+        $evaluation->sessionPerformed = $data['sessionPerformed'] ?? $evaluation->sessionPerformed;
+        $evaluation->complexity = $data['complexity'] ?? $evaluation->complexity;
+        $evaluation->workload = $data['workload'] ?? $evaluation->workload;
+        $evaluation->trafficLoad = $data['trafficLoad'] ?? $evaluation->trafficLoad;
+        $evaluation->trainingPhase = $data['trainingPhase'] ?? $evaluation->trainingPhase;
+        // Final review
+        $evaluation->finalReview = $data['finalReview'] ?? '';
+
+        $evaluation->save();
 
         return redirect()->intended(route('training.show', $evaluation->training_id))
             ->withSuccess('Evaluation successfully updated');
@@ -248,6 +286,14 @@ class TrainingReportController extends Controller
     {
         return request()->validate([
             'report_date' => 'required|date_format:d/m/Y',
+            'startTime' => 'required|date_format:H:i:s',
+            'endTime' => 'required|date_format:H:i:s',
+            'sessionPerformed' => 'required',
+            'complexity' => 'required',
+            'workload' => 'required',
+            'trafficLoad' => 'required',
+            'trainingPhase' => 'required',
+            'finalReview' => 'nullable|string|max:512',
             'position' => 'nullable',
             'results' => 'required|array',
             'results.*.vote' => 'nullable|in:I,S,G',

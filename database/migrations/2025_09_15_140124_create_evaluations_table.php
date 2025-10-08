@@ -13,10 +13,17 @@ return new class extends Migration
             $table->unsignedBigInteger('student_id');
             $table->string('level')->nullable();
             $table->date('date')->nullable();
+            $table->time('start')->nullable();
+            $table->time('end')->nullable();
             $table->string('position')->nullable();
             $table->unsignedBigInteger('examiner_id')->nullable();
             $table->unsignedBigInteger('training_id')->nullable();
-
+            $table->string('sessionPerformed')->nullable();
+            $table->string('complexity')->nullable();
+            $table->string('workload')->nullable();
+            $table->string('trafficLoad')->nullable();
+            $table->string('trainingPhase')->nullable();
+            $table->text('finalReview')->nullable();
             // optional: foreign keys
             $table->foreign('student_id')->references('id')->on('users');
             $table->foreign('examiner_id')->references('id')->on('users');

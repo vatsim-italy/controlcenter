@@ -131,6 +131,7 @@ Route::middleware(['auth', 'activity', 'suspended'])->group(function () {
         Route::post('/training/{training}/report', 'store')->name('training.report.store');
         Route::patch('/training/report/{evaluation}', 'update')->name('training.report.update');
         Route::get('/training/report/{report}/delete', 'destroy')->name('training.report.delete');
+        Route::get('/training/report/show/{evaluation}', 'show')->name('training.report.show');
     });
 
     // Training object routes

@@ -563,9 +563,19 @@
                                                     <i class="fas fa-map-marker-alt"></i> {{ $report->position }}&emsp;
                                                 @endif
                                                 <i class="fas fa-user-edit"></i> {{ optional($report->examiner)->name ?? 'Unknown' }}
-                                                @can('update', $report)
-                                                    <a class="float-end" href="{{ route('training.report.edit', $report->eval_id) }}"><i class="fa fa-pen-square"></i> Edit</a>
-                                                @endcan
+                                                    <div class="float-end">
+                                                        @can('update', $report)
+                                                            <a href="{{ route('training.report.edit', $report->eval_id) }}" class="me-2">
+                                                                <i class="fa fa-pen-square"></i> Edit
+                                                            </a>
+                                                        @endcan
+
+                                                        @can('view', $report)
+                                                            <a href="{{ route('training.report.show', $report->eval_id) }}">
+                                                                <i class="fa fa-clipboard"></i> Show
+                                                            </a>
+                                                        @endcan
+                                                    </div>
                                             </small>
 
                                             @php
@@ -580,6 +590,17 @@
                                                 <span class="badge bg-success">G: {{ $countG }}</span>
                                                 <span class="badge bg-warning text-dark">S: {{ $countS }}</span>
                                                 <span class="badge bg-danger">I: {{ $countI }}</span>
+
+                                                @if(isset($report->finalReview))
+                                                    <hr>
+
+                                                <p class="fw-bold text-primary">
+                                                    <i class="fas fa-clipboard-list-check"></i>&nbsp;Final Review
+                                                </p>
+                                                <div id="markdown-improve">
+                                                    @markdown($report->finalReview)
+                                                </div>
+                                                @endif
                                             </div>
                                         </div>
                                     </div>

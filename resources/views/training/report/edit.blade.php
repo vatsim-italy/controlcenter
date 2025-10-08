@@ -1,6 +1,6 @@
 @extends('layouts.app')
 
-@section('title', 'New Training Report')
+@section('title', 'Edit Training Report')
 @section('content')
 
     <div class="row">
@@ -8,7 +8,7 @@
             <div class="card shadow mb-4">
                 <div class="card-header bg-primary py-3 d-flex flex-row align-items-center justify-content-between">
                     <h6 class="m-0 fw-bold text-white">
-                        New Training Report for {{ $training->user->first_name }}'s training for
+                        Edit Training Report for {{ $training->user->first_name }}'s training for
                         @foreach($training->ratings as $rating)
                             @if ($loop->last)
                                 {{ $rating->name }}
@@ -50,17 +50,81 @@
                         </div>
 
                         <div class="mb-3">
-                            <label class="form-label" for="date">Date</label>
-                            <input id="date" class="datepicker form-control @error('report_date') is-invalid @enderror"
-                                   type="text" name="report_date"
-                                   value="{{ old('report_date') ?? \Carbon\Carbon::parse($evaluation->date)->format('d/m/Y') }}"
-                                   required>
+                            <div class="row">
+                                <div class="col-md-12 mb-3 d-flex gap-3 align-items-end">
+                                    <div class="flex-fill">
+                                        <label class="form-label" for="date">Date</label>
+                                        <input type="text" class="form-control datepicker  @error('report_date') is-invalid @enderror" name="report_date" id="date" value="{{ old('report_date') ?? \Carbon\Carbon::parse($evaluation->date)->format('d/m/Y') }}" required>
+                                    </div>
+
+                                    <div class="flex-fill">
+                                        <label class="form-label" for="startTime">Start (Zulu)</label>
+                                        <input id="startTime" class="form-control" type="time" name="startTime" value="{{ old('position', $evaluation->start) }}" required>
+                                    </div>
+
+                                    <div class="flex-fill">
+                                        <label class="form-label" for="endTime">End (Zulu)</label>
+                                        <input id="endTime" class="form-control" type="time" name="endTime" placeholder="12:00" value="{{ old('position', $evaluation->end) }}" required>
+                                    </div>
+                                </div>
+                            </div>
                             @error('report_date')
                             <span class="text-danger">{{ $errors->first('report_date') }}</span>
                             @enderror
                         </div>
 
-                        @foreach($itemsByCategory as $category => $items)
+                        <div class="mb-3">
+                            <h5 class="fw-bold">Session Information</h5>
+                            <div class="row">
+                                <div class="col-md-2 mb-3">
+                                    <label for="sessionPerformed" class="form-label">Session Type</label>
+                                    <select name="sessionPerformed" id="sessionPerformed" class="form-select">
+                                        <option value="Online" {{ old('sessionPerformed', $evaluation->sessionPerformed ?? '') == 'Online' ? 'selected' : '' }}>Online</option>
+                                        <option value="Sweatbox" {{ old('sessionPerformed', $evaluation->sessionPerformed ?? '') == 'Sweatbox' ? 'selected' : '' }}>Sweatbox</option>
+                                    </select>
+                                </div>
+
+                                <div class="col-md-2 mb-3">
+                                    <label for="complexity" class="form-label">Complexity</label>
+                                    <select name="complexity" id="complexity" class="form-select">
+                                        <option value="Low" {{ old('complexity', $evaluation->complexity ?? '') == 'Low' ? 'selected' : '' }}>Low</option>
+                                        <option value="Medium" {{ old('complexity', $evaluation->complexity ?? '') == 'Medium' ? 'selected' : '' }}>Medium</option>
+                                        <option value="High" {{ old('complexity', $evaluation->complexity ?? '') == 'High' ? 'selected' : '' }}>High</option>
+                                    </select>
+                                </div>
+
+                                <div class="col-md-2 mb-3">
+                                    <label for="workload" class="form-label">Workload</label>
+                                    <select name="workload" id="workload" class="form-select">
+                                        <option value="Low" {{ old('workload', $evaluation->workload ?? '') == 'Low' ? 'selected' : '' }}>Low</option>
+                                        <option value="Medium" {{ old('workload', $evaluation->workload ?? '') == 'Medium' ? 'selected' : '' }}>Medium</option>
+                                        <option value="High" {{ old('workload', $evaluation->workload ?? '') == 'High' ? 'selected' : '' }}>High</option>
+                                    </select>
+                                </div>
+
+                                <div class="col-md-2 mb-3">
+                                    <label for="trafficLoad" class="form-label">Traffic Load</label>
+                                    <select name="trafficLoad" id="trafficLoad" class="form-select">
+                                        <option value="Low" {{ old('trafficLoad', $evaluation->trafficLoad ?? '') == 'Low' ? 'selected' : '' }}>Low</option>
+                                        <option value="Medium" {{ old('trafficLoad', $evaluation->trafficLoad ?? '') == 'Medium' ? 'selected' : '' }}>Medium</option>
+                                        <option value="High" {{ old('trafficLoad', $evaluation->trafficLoad ?? '') == 'High' ? 'selected' : '' }}>High</option>
+                                    </select>
+                                </div>
+
+                                <div class="col-md-3 mb-3">
+                                    <label for="trainingPhase" class="form-label">Training Phase</label>
+                                    <select name="trainingPhase" id="trainingPhase" class="form-select">
+                                        <option value="Basic" {{ old('trainingPhase', $evaluation->trainingPhase ?? '') == 'Basic' ? 'selected' : '' }}>Basic</option>
+                                        <option value="PreIntermediate" {{ old('trainingPhase', $evaluation->trainingPhase ?? '') == 'PreIntermediate' ? 'selected' : '' }}>Pre-intermediate</option>
+                                        <option value="Intermediate" {{ old('trainingPhase', $evaluation->trainingPhase ?? '') == 'Intermediate' ? 'selected' : '' }}>Intermediate</option>
+                                        <option value="Advanced" {{ old('trainingPhase', $evaluation->trainingPhase ?? '') == 'Advanced' ? 'selected' : '' }}>Advanced</option>
+                                        <option value="ExamType" {{ old('trainingPhase', $evaluation->trainingPhase ?? '') == 'ExamType' ? 'selected' : '' }}>Exam Type</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+
+                    @foreach($itemsByCategory as $category => $items)
                             <h5 class="mt-4">{{ $category }}</h5>
                             <table class="table table-bordered">
                                 <thead>
@@ -71,25 +135,25 @@
                                 </tr>
                                 </thead>
                                 <tbody>
-                                @foreach($items as $item)
+                                @foreach($items as $i => $item)
                                     <tr>
                                         <td>{{ $item->description }}</td>
                                         <td class="text-center">
-
                                             <select class="form-select form-select-sm vote-select"
                                                     name="results[{{ $item->item_id }}][vote]">
                                                 <option value="">Select</option>
-                                                <option value="I" {{ (old('results.'.$item->item_id.'.vote') ?? $results[$item->item_id]->vote ?? '') == 'I' ? 'selected' : '' }}>I</option>
-                                                <option value="S" {{ (old('results.'.$item->item_id.'.vote') ?? $results[$item->item_id]->vote ?? '') == 'S' ? 'selected' : '' }}>S</option>
-                                                <option value="G" {{ (old('results.'.$item->item_id.'.vote') ?? $results[$item->item_id]->vote ?? '') == 'G' ? 'selected' : '' }}>G</option>
+                                                <option value="I" {{ ($results[$item->item_id]->vote ?? '') == 'I' ? 'selected' : '' }}>I</option>
+                                                <option value="S" {{ ($results[$item->item_id]->vote ?? '') == 'S' ? 'selected' : '' }}>S</option>
+                                                <option value="G" {{ ($results[$item->item_id]->vote ?? '') == 'G' ? 'selected' : '' }}>G</option>
                                             </select>
                                         </td>
                                         <td>
-                                         <textarea class="form-control comment-textarea"
-                                                   name="results[{{ $item->item_id }}][comment]"
-                                                   maxlength="255"
-                                                   rows="1"
-                                                   placeholder="Enter comment...">{{ old('results.'.$item->item_id.'.comment') ?? $results[$item->item_id]->comment ?? '' }}</textarea>
+                                            <textarea class="form-control comment-textarea"
+                                                name="results[{{ $item->item_id }}][comment]"
+                                                maxlength="255"
+                                                rows="1"
+                                               placeholder="Enter comment...">{{ old("results.$i.comment") ?? $results[$item->item_id]->comment ?? '' }}
+                                            </textarea>
                                         </td>
                                     </tr>
                                 @endforeach
@@ -97,6 +161,14 @@
                             </table>
 
                         @endforeach                    <hr>
+
+                        <div class="mb-3">
+                            <label class="form-label" for="finalReview">Final Review</label>
+                            <textarea class="form-control @error('finalReview') is-invalid @enderror" name="finalReview" id="finalReview" rows="4" placeholder="In which areas do the student need to improve?">{{ old('finalReview', $evaluation->finalReview ?? '') }}</textarea>
+                            @error('finalReview')
+                            <span class="text-danger">{{ $errors->first('finalReview') }}</span>
+                            @enderror
+                        </div>
 
                         @if(session()->get('onetimekey') == null)
                             <div class="mb-3 form-check">
@@ -142,7 +214,7 @@
                 }
             });
             var simplemde2 = new EasyMDE({
-                element: document.getElementById("contentimprove"),
+                element: document.getElementById("finalReview"),
                 status: false,
                 toolbar: ["bold", "italic", "heading-3", "|", "quote", "unordered-list", "ordered-list", "|", "link", "preview", "side-by-side", "fullscreen", "|", "guide"],
                 insertTexts: {

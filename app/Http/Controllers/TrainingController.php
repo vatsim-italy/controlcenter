@@ -388,7 +388,7 @@ class TrainingController extends Controller
         $reports = TrainingReport::where('training_id', $training->id)->get();
         $reportsNew = Evaluation::with(['results.item'])  // eager load results and their items
         ->where('training_id', $training->id)
-            ->get();
+            ->get()->sortByDesc('created_at');
 
         $reportsAndExams = collect($reports)->merge($examinations);
         $reportsAndExams = $reportsAndExams->sort(function ($a, $b) {

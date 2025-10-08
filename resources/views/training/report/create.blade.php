@@ -49,15 +49,82 @@
                     </div>
 
                     <div class="mb-3">
-                        <label class="form-label" for="date">Date</label>
-                        <input id="date" class="datepicker form-control @error('report_date') is-invalid @enderror" type="text" name="report_date" value="{{ old('report_date') }}" required>
+                        <div class="row">
+                            <div class="col-md-12 mb-3 d-flex gap-3 align-items-end">
+                                <div class="flex-fill">
+                                    <label class="form-label" for="date">Date</label>
+                                    <input type="text" class="form-control datepicker  @error('report_date') is-invalid @enderror" name="report_date" id="date" value="{{ old('report_date') }}" required>
+                                </div>
+
+                                <div class="flex-fill">
+                                    <label class="form-label" for="startTime">Start (Zulu)</label>
+                                    <input id="startTime" class="form-control" type="time" name="startTime" placeholder="12:00" required>
+                                </div>
+
+                                <div class="flex-fill">
+                                    <label class="form-label" for="endTime">End (Zulu)</label>
+                                    <input id="endTime" class="form-control" type="time" name="endTime" placeholder="12:00" required>
+                                </div>
+                            </div>
+                        </div>
                         @error('report_date')
                             <span class="text-danger">{{ $errors->first('report_date') }}</span>
                         @enderror
                     </div>
 
+                    <div class="mb-3">
+                        <h5 class="fw-bold">Session Information</h5>
+                        <div class="row">
+                            <div class="col-md-2 mb-3">
+                                <label for="sessionPerformed" class="form-label">Session Type</label>
+                                <select name="sessionPerformed" id="sessionPerformed" class="form-select">
+                                    <option value="Online">Online</option>
+                                    <option value="Sweatbox">Sweatbox</option>
+                                </select>
+                            </div>
+
+                            <div class="col-md-2 mb-3">
+                                <label for="complexity" class="form-label">Complexity</label>
+                                <select name="complexity" id="complexity" class="form-select">
+                                    <option value="Low">Low</option>
+                                    <option value="Medium">Medium</option>
+                                    <option value="High">High</option>
+                                </select>
+                            </div>
+
+                            <div class="col-md-2 mb-3">
+                                <label for="workload" class="form-label">Workload</label>
+                                <select name="workload" id="workload" class="form-select">
+                                    <option value="Low">Low</option>
+                                    <option value="Medium">Medium</option>
+                                    <option value="High">High</option>
+                                </select>
+                            </div>
+
+                            <div class="col-md-2 mb-3">
+                                <label for="trafficLoad" class="form-label">Traffic Load</label>
+                                <select name="trafficLoad" id="trafficLoad" class="form-select">
+                                    <option value="Low">Low</option>
+                                    <option value="Medium">Medium</option>
+                                    <option value="High">High</option>
+                                </select>
+                            </div>
+
+                            <div class="col-md-3 mb-3">
+                                <label for="trainingPhase" class="form-label">Training Phase</label>
+                                <select name="trainingPhase" id="trainingPhase" class="form-select">
+                                    <option value="Basic">Basic</option>
+                                    <option value="PreIntermediate">Pre-intermediate</option>
+                                    <option value="Intermediate">Intermediate</option>
+                                    <option value="Advanced">Advanced</option>
+                                    <option value="ExamType">Exam Type</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
                     @foreach($itemsByCategory as $category => $items)
-                        <h5 class="mt-4">{{ $category }}</h5>
+                        <h5 class="mt-4 fw-bold">{{ $category }}</h5>
                         <table class="table table-bordered">
                             <thead>
                             <tr>
@@ -91,8 +158,15 @@
                             @endforeach
                             </tbody>
                         </table>
-
                     @endforeach                    <hr>
+
+                    <div class="mb-3">
+                        <label class="form-label" for="finalReview">Final Review</label>
+                        <textarea class="form-control @error('finalReview') is-invalid @enderror" name="finalReview" id="finalReview" rows="4" placeholder="In which areas do the student need to improve?">{{ old('contentimprove') }}</textarea>
+                        @error('finalReview')
+                        <span class="text-danger">{{ $errors->first('finalReview') }}</span>
+                        @enderror
+                    </div>
 
                     @if(session()->get('onetimekey') == null)
                         <div class="mb-3 form-check">
@@ -138,7 +212,7 @@
             }
         });
         var simplemde2 = new EasyMDE({
-            element: document.getElementById("contentimprove"),
+            element: document.getElementById("finalReview"),
             status: false,
             toolbar: ["bold", "italic", "heading-3", "|", "quote", "unordered-list", "ordered-list", "|", "link", "preview", "side-by-side", "fullscreen", "|", "guide"],
             insertTexts: {

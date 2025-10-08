@@ -59,12 +59,12 @@
 
                                     <div class="flex-fill">
                                         <label class="form-label" for="startTime">Start (Zulu)</label>
-                                        <input id="startTime" class="form-control" type="time" name="startTime" value="{{ old('position', $evaluation->start) }}" required>
+                                        <input id="startTime" class="form-control" type="time" name="startTime" value="{{ old('position', \Carbon\Carbon::create($evaluation->start)->format('H:i')) }}" required>
                                     </div>
 
                                     <div class="flex-fill">
                                         <label class="form-label" for="endTime">End (Zulu)</label>
-                                        <input id="endTime" class="form-control" type="time" name="endTime" placeholder="12:00" value="{{ old('position', $evaluation->end) }}" required>
+                                        <input id="endTime" class="form-control" type="time" name="endTime" placeholder="12:00" value="{{ old('position', \Carbon\Carbon::create($evaluation->start)->format('H:i')) }}" required>
                                     </div>
                                 </div>
                             </div>

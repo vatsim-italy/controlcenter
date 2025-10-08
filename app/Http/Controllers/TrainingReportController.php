@@ -286,8 +286,8 @@ class TrainingReportController extends Controller
     {
         return request()->validate([
             'report_date' => 'required|date_format:d/m/Y',
-            'startTime' => 'required|date_format:H:i:s',
-            'endTime' => 'required|date_format:H:i:s',
+            'startTime' => 'required|date_format:H:i',
+            'endTime' => 'required|date_format:H:i',
             'sessionPerformed' => 'required',
             'complexity' => 'required',
             'workload' => 'required',

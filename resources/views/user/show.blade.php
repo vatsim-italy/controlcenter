@@ -32,8 +32,10 @@
                     <dt>Name</dt>
                     <dd>{{ $user->first_name.' '.$user->last_name }}<button type="button" onclick="navigator.clipboard.writeText('{{ $user->first_name.' '.$user->last_name }}')"><i class="fas fa-copy"></i></button></dd>
 
-                    <dt>Email</dt>
-                    <dd class="separator pb-3">{{ $user->email }}<button type="button" onclick="navigator.clipboard.writeText('{{ $user->email }}')"><i class="fas fa-copy"></i></button></dd>
+                    @if(\Auth::user()->isModeratorOrAbove())
+                        <dt>Email</dt>
+                        <dd class="separator pb-3">{{ $user->email }}<button type="button" onclick="navigator.clipboard.writeText('{{ $user->email }}')"><i class="fas fa-copy"></i></button></dd>
+                    @endif
 
                     <dt class="pt-2">ATC Rating</dt>
                     <dd>{{ $user->rating_short }}</dd>
@@ -350,11 +352,31 @@
                                         </tr>
                                         <tr>
                                             <th>Issued</th>
-                                            <td>{{ $endorsement->valid_from->toEuropeanDate() }}</td>
+                                            <td>
+                                                @if (isset($endorsement->valid_from))
+                                                    @if ($endorsement->valid_from->isFuture())
+                                                        {{ $endorsement->valid_from->toEuropeanDateTime() }}
+                                                    @else
+                                                        {{ $endorsement->valid_from->diffForHumans() }}
+                                                    @endif
+                                                @else
+                                                    Never
+                                                @endif
+                                            </td>
                                         </tr>
                                         <tr class="spacing">
                                             <th>Expire</th>
-                                            <td>{{ isset($endorsement->valid_to) ? $endorsement->valid_to->toEuropeanDateTime() : 'Never' }}</td>
+                                            <td>
+                                                @if (isset($endorsement->valid_to))
+                                                    @if ($endorsement->valid_to->isFuture())
+                                                        {{ $endorsement->valid_to->diffForHumans() }}
+                                                    @else
+                                                        {{ $endorsement->valid_to->toEuropeanDateTime() }}
+                                                    @endif
+                                                @else
+                                                    Never
+                                                @endif
+                                            </td>
                                         </tr>
                                         <tr>
                                             <th>Issued by</th>

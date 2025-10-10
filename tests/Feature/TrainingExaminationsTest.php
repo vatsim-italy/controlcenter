@@ -36,7 +36,7 @@ class TrainingExaminationsTest extends TestCase
         Notification::fake();
 
         // --- PDF config for tests ---
-        config()->set('pdf.S2', [
+        config()->set('pdf.C1', [
             'GENERAL' => [
                 'knowledge' => 'Knowledge',
                 'skills' => 'Skills',

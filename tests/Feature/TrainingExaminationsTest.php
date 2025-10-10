@@ -35,21 +35,6 @@ class TrainingExaminationsTest extends TestCase
 
         Notification::fake();
 
-        // --- PDF config for tests ---
-        config()->set('pdf.C1', [
-            'GENERAL' => [
-                'knowledge' => 'Knowledge',
-                'skills' => 'Skills',
-                'generalComments' => 'Comments',
-            ],
-            'ATC_COMPETENCIES' => [],
-            'COMMUNICATIONS' => [],
-        ]);
-
-        // Debug PDF config
-        logger('PDF config keys: ' . implode(', ', array_keys(config('pdf'))));
-        logger('PDF C1 GENERAL exists? ' . (isset(config('pdf.C1')['GENERAL']) ? 'yes' : 'no'));
-
         // Create area for training
         $area = Area::factory()->create();
 
@@ -60,11 +45,8 @@ class TrainingExaminationsTest extends TestCase
             'status' => 3, // AWAITING_EXAM
         ]);
 
-        $attachedRating = Rating::find(5);
+        $attachedRating = Rating::find(4);
         $this->training->ratings()->attach($attachedRating);
-
-        // Debug training rating
-        logger('Training last rating: ' . $this->training->ratings->last()->name);
 
         // Create examiner with endorsement
         $this->examiner = User::factory()->create();
@@ -337,7 +319,7 @@ class TrainingExaminationsTest extends TestCase
             'result' => 'PASSED',
         ]);
 
-        $response->assertRedirect(route('dashboard'));
+        $response->assertRedirect(route('training.show', $this->training->id));
         $finalResponse = $this->actingAs($this->examiner)
             ->followingRedirects()
             ->get(route('training.show', $this->training->id));

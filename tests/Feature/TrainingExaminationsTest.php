@@ -35,6 +35,17 @@ class TrainingExaminationsTest extends TestCase
 
         Notification::fake();
 
+        // --- PDF config for tests ---
+        config()->set('pdf.S2', [
+            'GENERAL' => [
+                'knowledge' => 'Knowledge',
+                'skills' => 'Skills',
+                'generalComments' => 'Comments',
+            ],
+            'ATC_COMPETENCIES' => [],
+            'COMMUNICATIONS' => [],
+        ]);
+
         // Create area for training
         $area = Area::factory()->create();
 

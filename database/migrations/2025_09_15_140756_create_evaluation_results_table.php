@@ -14,6 +14,7 @@ return new class extends Migration
             $table->unsignedBigInteger('item_id');
             $table->string('vote')->nullable();
             $table->text('comment')->nullable();
+            $table->timestamps(); // Adds created_at and updated_at columns
 
             // optional: foreign keys
             $table->foreign('eval_id')->references('eval_id')->on('evaluations')->onDelete('cascade');

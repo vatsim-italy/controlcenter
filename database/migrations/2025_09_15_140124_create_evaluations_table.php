@@ -28,6 +28,8 @@ return new class extends Migration
             $table->foreign('student_id')->references('id')->on('users');
             $table->foreign('examiner_id')->references('id')->on('users');
             $table->foreign('training_id')->references('id')->on('trainings');
+            $table->timestamps(); // Adds created_at and updated_at columns
+
         });
     }
 

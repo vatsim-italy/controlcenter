@@ -7,6 +7,8 @@ use Illuminate\Database\Eloquent\Model;
 
 class EvaluationItem extends Model
 {
+    use HasFactory;
+
     protected $table = 'evaluation_items';
     protected $primaryKey = 'item_id';
     public $timestamps = false;

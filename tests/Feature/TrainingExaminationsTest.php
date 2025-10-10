@@ -46,6 +46,10 @@ class TrainingExaminationsTest extends TestCase
             'COMMUNICATIONS' => [],
         ]);
 
+        // Debug PDF config
+        logger('PDF config keys: ' . implode(', ', array_keys(config('pdf'))));
+        logger('PDF C1 GENERAL exists? ' . (isset(config('pdf.C1')['GENERAL']) ? 'yes' : 'no'));
+
         // Create area for training
         $area = Area::factory()->create();
 
@@ -56,7 +60,11 @@ class TrainingExaminationsTest extends TestCase
             'status' => 3, // AWAITING_EXAM
         ]);
 
-        $this->training->ratings()->attach(Rating::find(5));
+        $attachedRating = Rating::find(5);
+        $this->training->ratings()->attach($attachedRating);
+
+        // Debug training rating
+        logger('Training last rating: ' . $this->training->ratings->last()->name);
 
         // Create examiner with endorsement
         $this->examiner = User::factory()->create();
@@ -69,7 +77,7 @@ class TrainingExaminationsTest extends TestCase
             'revoked' => false,
         ]);
 
-        $examinerEndorsement->ratings()->save(Rating::find(5));
+        $examinerEndorsement->ratings()->save($attachedRating);
         $examinerEndorsement->areas()->save($area);
 
         // Create examination for testing

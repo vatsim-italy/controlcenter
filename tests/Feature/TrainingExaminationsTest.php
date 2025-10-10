@@ -43,6 +43,7 @@ class TrainingExaminationsTest extends TestCase
             'user_id' => User::factory()->create()->id,
             'area_id' => $area->id,
             'status' => 3, // AWAITING_EXAM
+            'rating' => Rating::find(5),
         ]);
 
         // Create examiner with endorsement

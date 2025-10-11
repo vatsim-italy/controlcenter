@@ -124,8 +124,8 @@
                             </div>
                         </div>
 
-                    @foreach($itemsByCategory as $category => $items)
-                            <h5 class="mt-4">{{ $category }}</h5>
+                    @foreach($itemsByCategory as $category => $categoryData)
+                            <h5 class="mt-4">{{ $categoryData['humanName'] }}</h5>
                             <table class="table table-bordered">
                                 <thead>
                                 <tr>
@@ -135,7 +135,7 @@
                                 </tr>
                                 </thead>
                                 <tbody>
-                                @foreach($items as $i => $item)
+                                @foreach($categoryData['items'] as $i => $item)
                                     <tr>
                                         <td>{{ $item->description }}</td>
                                         <td class="text-center">
@@ -170,7 +170,8 @@
                             @enderror
                         </div>
 
-                        @if(session()->get('onetimekey') == null)
+
+                        {{--@if(session()->get('onetimekey') == null)
                             <div class="mb-3 form-check">
                                 <input type="checkbox" value="1" class="form-check-input @error('draft') is-invalid @enderror" name="draft" id="draftCheck">
                                 <label class="form-check-label" name="draft" for="draftCheck">Save as draft</label>
@@ -178,7 +179,7 @@
                                 <span class="text-danger">{{ $errors->first('draft') }}</span>
                                 @enderror
                             </div>
-                        @endif
+                        @endif--}}
 
                         <button type="submit" id="training-submit-btn" class="btn btn-success">Save report</button>
                     </form>

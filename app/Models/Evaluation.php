@@ -32,6 +32,10 @@ class Evaluation extends Model
         'finalReview',
     ];
 
+    protected $casts = [
+        'date' => 'date:Y-m-d',
+    ];
+
     // Relationships
 
     /**

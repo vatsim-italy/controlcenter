@@ -21,6 +21,46 @@ use Illuminate\Support\Facades\Auth;
 class TrainingReportController extends Controller
 {
     /**
+     * Returns name and id of a rating
+     */
+    private function getRatingInfo(Training $training): array
+    {
+        $lastRating = $training->ratings->last()->name ?? null;
+        $ratingMap = [
+            'S1' => 2,
+            'S2' => 3,
+            'S3' => 4,
+            'C1' => 5,
+        ];
+
+        return [
+            'name' => $lastRating,
+            'number' => $ratingMap[$lastRating] ?? null,
+        ];
+    }
+
+    /**
+     * Returns positions and grouped evaluation items for a given rating
+     */
+    private function getEvaluationItems(string $ratingName, ?int $ratingNumber): array
+    {
+        $positions = Position::where('rating', $ratingNumber)->get();
+        $evaluationItems = EvaluationItem::where('rating', $ratingName)->get();
+
+        $itemsByCategory = $evaluationItems->groupBy('category')->map(function ($items, $category) {
+            return [
+                'humanName' => ucwords(str_replace('_', ' ', strtolower($category))),
+                'items' => $items,
+            ];
+        });
+
+        return [
+            'positions' => $positions,
+            'itemsByCategory' => $itemsByCategory,
+        ];
+    }
+
+    /**
      * Display a listing of the resource.
      *
      * @return \Illuminate\Contracts\View\Factory|\Illuminate\View\View
@@ -47,27 +87,22 @@ class TrainingReportController extends Controller
     {
         $this->authorize('create', [TrainingReport::class, $training]);
         if ($training->status < TrainingStatus::PRE_TRAINING->value) {
-            return redirect(null, 400)->back()->withErrors('Training report cannot be created for a training not in progress.');
+            return back()
+                ->withErrors('Training report cannot be created for a training not in progress.')
+                ->setStatusCode(400);
         }
 
-        $lastRating = $training->ratings->last()->name;
-        $ratingMap = [
-            'S1' => 2,
-            'S2' => 3,
-            'S3' => 4,
-            'C1' => 5,
-        ];
+        ['name' => $lastRating, 'number' => $ratingNumber] = $this->getRatingInfo($training);
 
-        $ratingNumber = $ratingMap[$lastRating] ?? null;
+        $evaluationItems = $this->getEvaluationItems($lastRating, $ratingNumber);
 
-        $positions = Position::where('rating', '=', $ratingNumber)->get();
-        $evaluationItems = EvaluationItem::where('rating', $lastRating)->get();
-        $itemsByCategory = $evaluationItems->groupBy('category');
+        $positions = $evaluationItems['positions'];
+        $itemsByCategory = $evaluationItems['itemsByCategory'];
 
         // Keep the onetimekey for another request
         $request->session()->reflash();
 
-        return view('training.report.create', compact('training', 'positions', 'evaluationItems', 'itemsByCategory'));
+        return view('training.report.create', compact('training', 'positions', 'itemsByCategory'));
     }
 
     /**
@@ -106,18 +141,14 @@ class TrainingReportController extends Controller
             'finalReview' => $data['finalReview'] ?? '',
         ]);
 
-        if (! empty($data['results']) && is_array($data['results'])) {
-            foreach ($data['results'] as $key => $item) {
-                $itemId = $key;
-
-                EvaluationResult::create([
-                    'eval_id' => $evaluation->eval_id,
-                    'item_id' => $itemId,
-                    'vote' => $item['vote'] ?? '',
-                    'comment' => $item['comment'] ?? '',
-                ]);
-            }
-        }
+        collect($data['results'] ?? [])->each(function ($item, $itemId) use ($evaluation) {
+            EvaluationResult::create([
+                'eval_id' => $evaluation->eval_id,
+                'item_id' => $itemId,
+                'vote' => $item['vote'] ?? '',
+                'comment' => $item['comment'] ?? '',
+            ]);
+        });
 
         if (isset($data['report_date'])) {
             $data['report_date'] = Carbon::createFromFormat('d/m/Y', $data['report_date'])->format('Y-m-d H:i:s');
@@ -160,18 +191,10 @@ class TrainingReportController extends Controller
         $this->authorize('view', $evaluation);
 
         $training = $evaluation->training;
-        $lastRating = $training->ratings->last()->name;
-        $ratingMap = [
-            'S1' => 2,
-            'S2' => 3,
-            'S3' => 4,
-            'C1' => 5,
-        ];
-        $ratingNumber = $ratingMap[$lastRating] ?? null;
-
-        $positions = Position::where('rating', $ratingNumber)->get();
-        $evaluationItems = EvaluationItem::where('rating', $lastRating)->get();
-        $itemsByCategory = $evaluationItems->groupBy('category');
+        ['name' => $lastRating, 'number' => $ratingNumber] = $this->getRatingInfo($training);
+        $evalData = $this->getEvaluationItems($lastRating, $ratingNumber);
+        $positions = $evalData['positions'];
+        $itemsByCategory = $evalData['itemsByCategory'];
 
         $results = $evaluation->results()->with('item')->get()->keyBy('item_id');
 
@@ -191,18 +214,10 @@ class TrainingReportController extends Controller
         $this->authorize('update', $evaluation);
 
         $training = $evaluation->training;
-        $lastRating = $training->ratings->last()->name;
-        $ratingMap = [
-            'S1' => 2,
-            'S2' => 3,
-            'S3' => 4,
-            'C1' => 5,
-        ];
-        $ratingNumber = $ratingMap[$lastRating] ?? null;
-
-        $positions = Position::where('rating', $ratingNumber)->get();
-        $evaluationItems = EvaluationItem::where('rating', $lastRating)->get();
-        $itemsByCategory = $evaluationItems->groupBy('category');
+        ['name' => $lastRating, 'number' => $ratingNumber] = $this->getRatingInfo($training);
+        $evalData = $this->getEvaluationItems($lastRating, $ratingNumber);
+        $positions = $evalData['positions'];
+        $itemsByCategory = $evalData['itemsByCategory'];
 
         $results = $evaluation->results()->with('item')->get()->keyBy('item_id');
 
@@ -221,7 +236,7 @@ class TrainingReportController extends Controller
         $this->authorize('update', $evaluation);
 
         $data = $this->validateRequest();
-        echo json_encode($data, JSON_PRETTY_PRINT);
+
         // Update evaluation date if provided
         if (isset($data['report_date'])) {
             $evaluation->date = Carbon::createFromFormat('d/m/Y', $data['report_date'])->format('Y-m-d');
@@ -229,7 +244,6 @@ class TrainingReportController extends Controller
 
         // Update other fields
         $evaluation->position = $data['position'] ?? $evaluation->position;
-
 
         // Update individual results
         if (! empty($data['results']) && is_array($data['results'])) {
@@ -242,7 +256,6 @@ class TrainingReportController extends Controller
                 }
             }
         }
-
 
         $evaluation->start = $data['startTime'] ?? $evaluation->start;
         $evaluation->end = $data['endTime'] ?? $evaluation->end;
@@ -259,7 +272,6 @@ class TrainingReportController extends Controller
         return redirect()->intended(route('training.show', $evaluation->training_id))
             ->withSuccess('Evaluation successfully updated');
     }
-
 
     /**
      * Remove the specified resource from storage.

@@ -123,8 +123,8 @@
                         </div>
                     </div>
 
-                    @foreach($itemsByCategory as $category => $items)
-                        <h5 class="mt-4 fw-bold">{{ $category }}</h5>
+                    @foreach($itemsByCategory as $category => $categoryData)
+                        <h5 class="mt-4 fw-bold">{{ $categoryData['humanName'] }}</h5>
                         <table class="table table-bordered">
                             <thead>
                             <tr>
@@ -134,7 +134,7 @@
                             </tr>
                             </thead>
                             <tbody>
-                            @foreach($items as $item)
+                            @foreach($categoryData['items'] as $item)
                                 <tr>
                                     <td>{{ $item->description }}</td>
                                     <td class="text-center">
@@ -168,21 +168,24 @@
                         @enderror
                     </div>
 
-                    @if(session()->get('onetimekey') == null)
-                        <div class="mb-3 form-check">
-                            <input type="checkbox" value="1" class="form-check-input @error('draft') is-invalid @enderror" name="draft" id="draftCheck">
-                            <label class="form-check-label" name="draft" for="draftCheck">Save as draft</label>
-                            @error('draft')
-                                <span class="text-danger">{{ $errors->first('draft') }}</span>
-                            @enderror
-                        </div>
-                    @endif
-
-                    <button type="submit" id="training-submit-btn" class="btn btn-success">Save report</button>
-                </form>
-            </div>
-        </div>
+{{--
+@if(session()->get('onetimekey') == null)
+    <div class="mb-3 form-check">
+        <input type="checkbox" value="1" class="form-check-input @error('draft') is-invalid @enderror" name="draft" id="draftCheck">
+        <label class="form-check-label" name="draft" for="draftCheck">Save as draft</label>
+        @error('draft')
+            <span class="text-danger">{{ $errors->first('draft') }}</span>
+        @enderror
     </div>
+@endif
+--}}
+
+
+<button type="submit" id="training-submit-btn" class="btn btn-success">Save report</button>
+</form>
+</div>
+</div>
+</div>
 </div>
 
 
@@ -193,78 +196,78 @@
 <!-- Flatpickr -->
 @vite(['resources/js/flatpickr.js', 'resources/sass/flatpickr.scss'])
 <script>
-    document.addEventListener("DOMContentLoaded", function () {
-        var defaultDate = "{{ old('report_date') }}"
-        document.querySelector('.datepicker').flatpickr({ disableMobile: true, minDate: "{!! date('Y-m-d', strtotime('-1 months')) !!}", maxDate: "{!! date('Y-m-d') !!}", dateFormat: "d/m/Y", defaultDate: defaultDate, locale: {firstDayOfWeek: 1 } });
-    });
+document.addEventListener("DOMContentLoaded", function () {
+var defaultDate = "{{ old('report_date') }}"
+document.querySelector('.datepicker').flatpickr({ disableMobile: true, minDate: "{!! date('Y-m-d', strtotime('-1 months')) !!}", maxDate: "{!! date('Y-m-d') !!}", dateFormat: "d/m/Y", defaultDate: defaultDate, locale: {firstDayOfWeek: 1 } });
+});
 </script>
 
 <!-- Markdown Editor -->
 @vite(['resources/js/easymde.js', 'resources/sass/easymde.scss'])
 <script>
-    document.addEventListener("DOMContentLoaded", function () {
-        var simplemde1 = new EasyMDE({
-            element: document.getElementById("contentBox"),
-            status: false,
-            toolbar: ["bold", "italic", "heading-3", "|", "quote", "unordered-list", "ordered-list", "|", "link", "preview", "side-by-side", "fullscreen", "|", "guide"],
-            insertTexts: {
-                link: ["[","](link)"],
-            }
-        });
-        var simplemde2 = new EasyMDE({
-            element: document.getElementById("finalReview"),
-            status: false,
-            toolbar: ["bold", "italic", "heading-3", "|", "quote", "unordered-list", "ordered-list", "|", "link", "preview", "side-by-side", "fullscreen", "|", "guide"],
-            insertTexts: {
-                link: ["[","](link)"],
-            }
-        });
+document.addEventListener("DOMContentLoaded", function () {
+var simplemde1 = new EasyMDE({
+element: document.getElementById("contentBox"),
+status: false,
+toolbar: ["bold", "italic", "heading-3", "|", "quote", "unordered-list", "ordered-list", "|", "link", "preview", "side-by-side", "fullscreen", "|", "guide"],
+insertTexts: {
+link: ["[","](link)"],
+}
+});
+var simplemde2 = new EasyMDE({
+element: document.getElementById("finalReview"),
+status: false,
+toolbar: ["bold", "italic", "heading-3", "|", "quote", "unordered-list", "ordered-list", "|", "link", "preview", "side-by-side", "fullscreen", "|", "guide"],
+insertTexts: {
+link: ["[","](link)"],
+}
+});
 
-        var submitClicked = false
-        document.addEventListener("submit", function(event) {
-            if (event.target.tagName === "FORM") {
-                submitClicked = true;
-            }
-        });
+var submitClicked = false
+document.addEventListener("submit", function(event) {
+if (event.target.tagName === "FORM") {
+submitClicked = true;
+}
+});
 
-        // Confirm closing window if there are unsaved changes
-        window.addEventListener('beforeunload', function (e) {
-            if(!submitClicked && (simplemde1.value() != '' || simplemde2.value() != '')){
-                e.preventDefault();
-                e.returnValue = '';
-            }
-        });
-    })
+// Confirm closing window if there are unsaved changes
+window.addEventListener('beforeunload', function (e) {
+if(!submitClicked && (simplemde1.value() != '' || simplemde2.value() != '')){
+e.preventDefault();
+e.returnValue = '';
+}
+});
+})
 
 
-    document.addEventListener('DOMContentLoaded', function() {
-        const voteSelects = document.querySelectorAll('.vote-select');
+document.addEventListener('DOMContentLoaded', function() {
+const voteSelects = document.querySelectorAll('.vote-select');
 
-        function updateColor(select) {
-            const val = select.value;
-            if(val === 'I') {
-                select.style.backgroundColor = '#dc3545'; // red
-                select.style.color = '#fff';
-                select.style.fontWeight = 'bold';
-            } else if(val === 'S') {
-                select.style.backgroundColor = '#90ee90'; // yellow
-                select.style.color = '#000';
-                select.style.fontWeight = 'bold';
-            } else if(val === 'G') {
-                select.style.backgroundColor = '#198754'; // green
-                select.style.color = '#fff';
-                select.style.fontWeight = 'bold';
-            } else {
-                select.style.backgroundColor = '';
-                select.style.color = '';
-            }
-        }
+function updateColor(select) {
+const val = select.value;
+if(val === 'I') {
+select.style.backgroundColor = '#dc3545'; // red
+select.style.color = '#fff';
+select.style.fontWeight = 'bold';
+} else if(val === 'S') {
+select.style.backgroundColor = '#90ee90'; // yellow
+select.style.color = '#000';
+select.style.fontWeight = 'bold';
+} else if(val === 'G') {
+select.style.backgroundColor = '#198754'; // green
+select.style.color = '#fff';
+select.style.fontWeight = 'bold';
+} else {
+select.style.backgroundColor = '';
+select.style.color = '';
+}
+}
 
-        voteSelects.forEach(select => {
-            updateColor(select); // initial color
-            select.addEventListener('change', () => updateColor(select));
-        });
-    });
+voteSelects.forEach(select => {
+updateColor(select); // initial color
+select.addEventListener('change', () => updateColor(select));
+});
+});
 
 </script>
 

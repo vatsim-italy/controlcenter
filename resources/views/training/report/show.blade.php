@@ -81,8 +81,8 @@
                         </div>
                     </div>
 
-                    @foreach($itemsByCategory as $category => $items)
-                        <h5 class="mt-4">{{ $category }}</h5>
+                    @foreach($itemsByCategory as $category => $categoryData)
+                        <h5 class="mt-4">{{ $categoryData['humanName'] }}</h5>
                         <table class="table table-bordered">
                             <thead>
                             <tr>
@@ -92,7 +92,7 @@
                             </tr>
                             </thead>
                             <tbody>
-                            @foreach($items as $i => $item)
+                            @foreach($categoryData['items'] as $i => $item)
                                 <tr>
                                     <td>{{ $item->description }}</td>
                                     <td class="text-center">

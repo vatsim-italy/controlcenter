@@ -598,7 +598,11 @@
                                                     <i class="fas fa-clipboard-list-check"></i>&nbsp;Final Review
                                                 </p>
                                                 <div id="markdown-improve">
-                                                    @markdown($report->finalReview)
+                                                    @if(!empty($report->finalReview))
+                                                        @markdown($report->finalReview)
+                                                    @else
+                                                        N/A
+                                                    @endif
                                                 </div>
                                                 @endif
                                             </div>

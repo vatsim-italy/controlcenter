@@ -532,7 +532,7 @@
 
                 @can('viewAny', [\App\Models\TrainingReport::class, $training])
                     <div class="accordion" id="reportAccordion">
-                        @if ($reportsAndExams->count() == 0)
+                        @if ($reportsAndExams->count() == 0 && $reportsNew->isEmpty())
                             <div class="card-text text-primary p-3">
                                 No training reports yet.
                             </div>

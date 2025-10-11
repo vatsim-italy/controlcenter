@@ -126,11 +126,12 @@ Route::middleware(['auth', 'activity', 'suspended'])->group(function () {
 
     // Training report routes
     Route::controller(TrainingReportController::class)->group(function () {
-        Route::get('/training/report/{report}', 'edit')->name('training.report.edit');
+        Route::get('/training/report/{evaluation}', 'edit')->name('training.report.edit');
         Route::get('/training/{training}/report/create', 'create')->name('training.report.create');
         Route::post('/training/{training}/report', 'store')->name('training.report.store');
-        Route::patch('/training/report/{report}', 'update')->name('training.report.update');
+        Route::patch('/training/report/{evaluation}', 'update')->name('training.report.update');
         Route::get('/training/report/{report}/delete', 'destroy')->name('training.report.delete');
+        Route::get('/training/report/show/{evaluation}', 'show')->name('training.report.show');
     });
 
     // Training object routes

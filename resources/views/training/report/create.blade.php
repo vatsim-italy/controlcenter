@@ -4,7 +4,7 @@
 @section('content')
 
 <div class="row">
-    <div class="col-xl-5 col-lg-12 col-md-12 mb-12">
+    <div class="col-12 mb-4">
         <div class="card shadow mb-4">
             <div class="card-header bg-primary py-3 d-flex flex-row align-items-center justify-content-between">
                 <h6 class="m-0 fw-bold text-white">
@@ -49,60 +49,143 @@
                     </div>
 
                     <div class="mb-3">
-                        <label class="form-label" for="date">Date</label>
-                        <input id="date" class="datepicker form-control @error('report_date') is-invalid @enderror" type="text" name="report_date" value="{{ old('report_date') }}" required>
+                        <div class="row">
+                            <div class="col-md-12 mb-3 d-flex gap-3 align-items-end">
+                                <div class="flex-fill">
+                                    <label class="form-label" for="date">Date</label>
+                                    <input type="text" class="form-control datepicker  @error('report_date') is-invalid @enderror" name="report_date" id="date" value="{{ old('report_date') }}" required>
+                                </div>
+
+                                <div class="flex-fill">
+                                    <label class="form-label" for="startTime">Start (Zulu)</label>
+                                    <input id="startTime" class="form-control" type="time" name="startTime" placeholder="12:00" required>
+                                </div>
+
+                                <div class="flex-fill">
+                                    <label class="form-label" for="endTime">End (Zulu)</label>
+                                    <input id="endTime" class="form-control" type="time" name="endTime" placeholder="12:00" required>
+                                </div>
+                            </div>
+                        </div>
                         @error('report_date')
                             <span class="text-danger">{{ $errors->first('report_date') }}</span>
                         @enderror
                     </div>
 
                     <div class="mb-3">
-                        <label class="form-label" for="contentBox">Report</label>
-                        <textarea class="form-control @error('content') is-invalid @enderror" name="content" id="contentBox" rows="8" placeholder="Write the report here.">{{ old('content') }}</textarea>
-                        @error('content')
-                            <span class="text-danger">{{ $errors->first('content') }}</span>
-                        @enderror
+                        <h5 class="fw-bold">Session Information</h5>
+                        <div class="row">
+                            <div class="col-md-2 mb-3">
+                                <label for="sessionPerformed" class="form-label">Session Type</label>
+                                <select name="sessionPerformed" id="sessionPerformed" class="form-select">
+                                    <option value="Online">Online</option>
+                                    <option value="Sweatbox">Sweatbox</option>
+                                </select>
+                            </div>
+
+                            <div class="col-md-2 mb-3">
+                                <label for="complexity" class="form-label">Complexity</label>
+                                <select name="complexity" id="complexity" class="form-select">
+                                    <option value="Low">Low</option>
+                                    <option value="Medium">Medium</option>
+                                    <option value="High">High</option>
+                                </select>
+                            </div>
+
+                            <div class="col-md-2 mb-3">
+                                <label for="workload" class="form-label">Workload</label>
+                                <select name="workload" id="workload" class="form-select">
+                                    <option value="Low">Low</option>
+                                    <option value="Medium">Medium</option>
+                                    <option value="High">High</option>
+                                </select>
+                            </div>
+
+                            <div class="col-md-2 mb-3">
+                                <label for="trafficLoad" class="form-label">Traffic Load</label>
+                                <select name="trafficLoad" id="trafficLoad" class="form-select">
+                                    <option value="Low">Low</option>
+                                    <option value="Medium">Medium</option>
+                                    <option value="High">High</option>
+                                </select>
+                            </div>
+
+                            <div class="col-md-3 mb-3">
+                                <label for="trainingPhase" class="form-label">Training Phase</label>
+                                <select name="trainingPhase" id="trainingPhase" class="form-select">
+                                    <option value="Basic">Basic</option>
+                                    <option value="PreIntermediate">Pre-intermediate</option>
+                                    <option value="Intermediate">Intermediate</option>
+                                    <option value="Advanced">Advanced</option>
+                                    <option value="ExamType">Exam Type</option>
+                                </select>
+                            </div>
+                        </div>
                     </div>
+
+                    @foreach($itemsByCategory as $category => $categoryData)
+                        <h5 class="mt-4 fw-bold">{{ $categoryData['humanName'] }}</h5>
+                        <table class="table table-bordered">
+                            <thead>
+                            <tr>
+                                <th style="width: 60%;">Description</th>
+                                <th style="width: 8%;">Vote</th>
+                                <th style="width: 32%;">Comment</th>
+                            </tr>
+                            </thead>
+                            <tbody>
+                            @foreach($categoryData['items'] as $item)
+                                <tr>
+                                    <td>{{ $item->description }}</td>
+                                    <td class="text-center">
+                                        <select class="form-select form-select-sm vote-select"
+                                                name="results[{{ $item->item_id }}][vote]"
+                                                >
+                                            <option value="">Select</option>
+                                            <option value="I" {{ (old('results.'.$item->item_id.'.vote') ?? $results[$item->item_id]->vote ?? '') == 'I' ? 'selected' : '' }}>I</option>
+                                            <option value="S" {{ (old('results.'.$item->item_id.'.vote') ?? $results[$item->item_id]->vote ?? '') == 'S' ? 'selected' : '' }}>S</option>
+                                            <option value="G" {{ (old('results.'.$item->item_id.'.vote') ?? $results[$item->item_id]->vote ?? '') == 'G' ? 'selected' : '' }}>G</option>
+                                        </select>
+                                    </td>
+                                    <td>
+                                         <textarea class="form-control comment-textarea"
+                                                   name="results[{{ $item->item_id }}][comment]"
+                                                   maxlength="255"
+                                                   rows="1"
+                                                   placeholder="Enter comment...">{{ old('results.'.$item->item_id.'.comment') ?? $results[$item->item_id]->comment ?? '' }}</textarea>
+                                    </td>
+                                </tr>
+                            @endforeach
+                            </tbody>
+                        </table>
+                    @endforeach                    <hr>
 
                     <div class="mb-3">
-                        <label class="form-label" for="contentimprove">Areas to improve</label>
-                        <textarea class="form-control @error('contentimprove') is-invalid @enderror" name="contentimprove" id="contentimprove" rows="4" placeholder="In which areas do the student need to improve?">{{ old('contentimprove') }}</textarea>
-                        @error('contentimprove')
-                            <span class="text-danger">{{ $errors->first('contentimprove') }}</span>
+                        <label class="form-label" for="finalReview">Final Review</label>
+                        <textarea class="form-control @error('finalReview') is-invalid @enderror" name="finalReview" id="finalReview" rows="4" placeholder="In which areas do the student need to improve?">{{ old('contentimprove') }}</textarea>
+                        @error('finalReview')
+                        <span class="text-danger">{{ $errors->first('finalReview') }}</span>
                         @enderror
                     </div>
 
-                    <div class="mb-3">
-                        <label class="form-label" for="attachments">Attachments</label>
-                        <div>
-                            <input type="file" name="files[]" id="add-file" class="@error('file') is-invalid @enderror" accept=".pdf, .xls, .xlsx, .doc, .docx, .txt, .png, .jpg, .jpeg" multiple>
-                        </div>
-                        @error('files')
-                            <span class="text-danger">{{ $errors->first('files') }}</span>
-                        @enderror
-                    </div>
-
-                    <hr>
-
-                    @can('create-draft', [\App\Models\TrainingReport::class, $training])
-                        <div class="mb-3 form-check">
-                            <input type="checkbox" value="1" class="form-check-input @error('draft') is-invalid @enderror" name="draft" id="draftCheck">
-                            <label class="form-check-label" name="draft" for="draftCheck">Save as draft</label>
-                            @error('draft')
-                                <span class="text-danger">{{ $errors->first('draft') }}</span>
-                            @enderror
-                        </div>
-                    @else
-                        <div class="mb-3">
-                            <span class="text-secondary">You cannot create a draft of this training report.</span>
-                        </div>
-                    @endcan
-
-                    <button type="submit" id="training-submit-btn" class="btn btn-success">Save report</button>
-                </form>
-            </div>
-        </div>
+{{--
+@if(session()->get('onetimekey') == null)
+    <div class="mb-3 form-check">
+        <input type="checkbox" value="1" class="form-check-input @error('draft') is-invalid @enderror" name="draft" id="draftCheck">
+        <label class="form-check-label" name="draft" for="draftCheck">Save as draft</label>
+        @error('draft')
+            <span class="text-danger">{{ $errors->first('draft') }}</span>
+        @enderror
     </div>
+@endif
+--}}
+
+
+<button type="submit" id="training-submit-btn" class="btn btn-success">Save report</button>
+</form>
+</div>
+</div>
+</div>
 </div>
 
 
@@ -113,48 +196,79 @@
 <!-- Flatpickr -->
 @vite(['resources/js/flatpickr.js', 'resources/sass/flatpickr.scss'])
 <script>
-    document.addEventListener("DOMContentLoaded", function () {
-        var defaultDate = "{{ old('report_date') }}"
-        document.querySelector('.datepicker').flatpickr({ disableMobile: true, minDate: "{!! date('Y-m-d', strtotime('-1 months')) !!}", maxDate: "{!! date('Y-m-d') !!}", dateFormat: "d/m/Y", defaultDate: defaultDate, locale: {firstDayOfWeek: 1 } });  
-    });
+document.addEventListener("DOMContentLoaded", function () {
+var defaultDate = "{{ old('report_date') }}"
+document.querySelector('.datepicker').flatpickr({ disableMobile: true, minDate: "{!! date('Y-m-d', strtotime('-1 months')) !!}", maxDate: "{!! date('Y-m-d') !!}", dateFormat: "d/m/Y", defaultDate: defaultDate, locale: {firstDayOfWeek: 1 } });
+});
 </script>
 
 <!-- Markdown Editor -->
 @vite(['resources/js/easymde.js', 'resources/sass/easymde.scss'])
 <script>
-    document.addEventListener("DOMContentLoaded", function () {
-        var simplemde1 = new EasyMDE({ 
-            element: document.getElementById("contentBox"), 
-            status: false, 
-            toolbar: ["bold", "italic", "heading-3", "|", "quote", "unordered-list", "ordered-list", "|", "link", "preview", "side-by-side", "fullscreen", "|", "guide"],
-            insertTexts: {
-                link: ["[","](link)"],
-            }
-        });
-        var simplemde2 = new EasyMDE({ 
-            element: document.getElementById("contentimprove"), 
-            status: false, 
-            toolbar: ["bold", "italic", "heading-3", "|", "quote", "unordered-list", "ordered-list", "|", "link", "preview", "side-by-side", "fullscreen", "|", "guide"],
-            insertTexts: {
-                link: ["[","](link)"],
-            }
-        });
+document.addEventListener("DOMContentLoaded", function () {
+var simplemde1 = new EasyMDE({
+element: document.getElementById("contentBox"),
+status: false,
+toolbar: ["bold", "italic", "heading-3", "|", "quote", "unordered-list", "ordered-list", "|", "link", "preview", "side-by-side", "fullscreen", "|", "guide"],
+insertTexts: {
+link: ["[","](link)"],
+}
+});
+var simplemde2 = new EasyMDE({
+element: document.getElementById("finalReview"),
+status: false,
+toolbar: ["bold", "italic", "heading-3", "|", "quote", "unordered-list", "ordered-list", "|", "link", "preview", "side-by-side", "fullscreen", "|", "guide"],
+insertTexts: {
+link: ["[","](link)"],
+}
+});
 
-        var submitClicked = false
-        document.addEventListener("submit", function(event) {
-            if (event.target.tagName === "FORM") {
-                submitClicked = true;
-            }
-        });
+var submitClicked = false
+document.addEventListener("submit", function(event) {
+if (event.target.tagName === "FORM") {
+submitClicked = true;
+}
+});
 
-        // Confirm closing window if there are unsaved changes
-        window.addEventListener('beforeunload', function (e) {
-            if(!submitClicked && (simplemde1.value() != '' || simplemde2.value() != '')){
-                e.preventDefault();
-                e.returnValue = '';
-            }
-        });
-    })
+// Confirm closing window if there are unsaved changes
+window.addEventListener('beforeunload', function (e) {
+if(!submitClicked && (simplemde1.value() != '' || simplemde2.value() != '')){
+e.preventDefault();
+e.returnValue = '';
+}
+});
+})
+
+
+document.addEventListener('DOMContentLoaded', function() {
+const voteSelects = document.querySelectorAll('.vote-select');
+
+function updateColor(select) {
+const val = select.value;
+if(val === 'I') {
+select.style.backgroundColor = '#dc3545'; // red
+select.style.color = '#fff';
+select.style.fontWeight = 'bold';
+} else if(val === 'S') {
+select.style.backgroundColor = '#90ee90'; // yellow
+select.style.color = '#000';
+select.style.fontWeight = 'bold';
+} else if(val === 'G') {
+select.style.backgroundColor = '#198754'; // green
+select.style.color = '#fff';
+select.style.fontWeight = 'bold';
+} else {
+select.style.backgroundColor = '';
+select.style.color = '';
+}
+}
+
+voteSelects.forEach(select => {
+updateColor(select); // initial color
+select.addEventListener('change', () => updateColor(select));
+});
+});
+
 </script>
 
 @endsection

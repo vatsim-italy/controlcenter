@@ -9,6 +9,7 @@ use App\Helpers\TrainingStatus;
 use App\Helpers\VatsimRating;
 use App\Models\Area;
 use App\Models\AtcActivity;
+use App\Models\Evaluation;
 use App\Models\Rating;
 use App\Models\Training;
 use App\Models\TrainingExamination;
@@ -385,6 +386,9 @@ class TrainingController extends Controller
 
         $examinations = TrainingExamination::where('training_id', $training->id)->get();
         $reports = TrainingReport::where('training_id', $training->id)->get();
+        $reportsNew = Evaluation::with(['results.item'])  // eager load results and their items
+        ->where('training_id', $training->id)
+            ->get()->sortByDesc('created_at');
 
         $reportsAndExams = collect($reports)->merge($examinations);
         $reportsAndExams = $reportsAndExams->sort(function ($a, $b) {
@@ -425,7 +429,7 @@ class TrainingController extends Controller
                 foreach ($categories as $exam) {
                     $exam['category'] = $category;
                     $exam['rating'] = DivisionApi::getUserExamRating((int) $exam['flag_exam_type'], $exam['exam_id']);
-                    if (!empty($exam['reassign_date'])) {
+                    if (! empty($exam['reassign_date'])) {
                         $exam['created_at'] = Carbon::parse($exam['reassign_date'])->toEuropeanDate();
                     } else {
                         $exam['created_at'] = Carbon::parse($exam['created_at'])->toEuropeanDate();
@@ -438,7 +442,7 @@ class TrainingController extends Controller
             $divisionExams = $divisionExams->sortByDesc('created_at');
         }
 
-        return view('training.show', compact('training', 'reportsAndExams', 'trainingMentors', 'statuses', 'types', 'experiences', 'activities', 'trainingInterests', 'activeTrainingInterest', 'relatedTasks', 'requestTypes', 'requestPopularAssignees', 'divisionExams'));
+        return view('training.show', compact('training', 'reportsAndExams', 'trainingMentors', 'statuses', 'types', 'experiences', 'activities', 'trainingInterests', 'activeTrainingInterest', 'relatedTasks', 'requestTypes', 'requestPopularAssignees', 'divisionExams', 'reportsNew'));
     }
 
     /**
@@ -757,7 +761,7 @@ class TrainingController extends Controller
 
         // Fetch the current state and toggle it
         $state = $training->pre_training_completed;
-        $newState = !$state;
+        $newState = ! $state;
         $newStateText = $newState ? 'completed' : 'not completed';
 
         // Update the state in the database

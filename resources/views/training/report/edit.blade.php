@@ -1,215 +1,274 @@
 @extends('layouts.app')
 
-@section('title', 'Training Report')
+@section('title', 'Edit Training Report')
 @section('content')
 
+    <div class="row">
+        <div class="col-12 mb-4">
+            <div class="card shadow mb-4">
+                <div class="card-header bg-primary py-3 d-flex flex-row align-items-center justify-content-between">
+                    <h6 class="m-0 fw-bold text-white">
+                        Edit Training Report for {{ $training->user->first_name }}'s training for
+                        @foreach($training->ratings as $rating)
+                            @if ($loop->last)
+                                {{ $rating->name }}
+                            @else
+                                {{ $rating->name . " + " }}
+                            @endif
+                        @endforeach
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <form action="{{ route('training.report.update', ['evaluation' => $evaluation->eval_id]) }}" method="POST">
+                        @csrf
+                        @method('PATCH')
 
-<div class="row">
-    <div class="col-xl-5 col-lg-12 col-md-12 mb-12">
-        <div class="card shadow mb-4">
-            <div class="card-header bg-primary py-3 d-flex flex-row align-items-center justify-content-between">
-                <h6 class="m-0 fw-bold text-white">
-                    {{ $report->training->user->first_name }}'s training {{ $report->report_date->toEuropeanDate() }}
-                    @if($report->draft)
-                        <span class='badge bg-danger'>Draft</span>
-                    @endif
-                </h6>
-            </div>
-            <div class="card-body">
-                <form action="{{ route('training.report.update', ['report' => $report->id]) }}" method="POST">
-                    @csrf
-                    @method('PATCH')
+                        <div class="mb-3">
+                            <label class="form-label" for="position">Position</label>
+                            <input
+                                id="position"
+                                class="form-control @error('position') is-invalid @enderror"
+                                type="text"
+                                name="position"
+                                list="positions"
+                                value="{{ old('position') ?? $evaluation->position }}"
+                                required>
 
-                    <div class="mb-3">
-                        <label class="form-label" for="position">Position</label>
-                        <input
-                            id="position"
-                            class="form-control @error('position') is-invalid @enderror"
-                            type="text"
-                            name="position"
-                            list="positions"
-                            value="{{ empty(old('position')) ? $report->position : old('position')}}"
-                            required>
-
-                        <datalist id="positions">
-                            @foreach($positions as $position)
-                                @browser('isFirefox')
+                            <datalist id="positions">
+                                @foreach($positions as $position)
+                                    @browser('isFirefox')
                                     <option>{{ $position->callsign }}</option>
-                                @else
-                                    <option value="{{ $position->callsign }}">{{ $position->name }}</option>
-                                @endbrowser
-                            @endforeach
-                        </datalist>
+                                    @else
+                                        <option value="{{ $position->callsign }}">{{ $position->name }}</option>
+                                        @endbrowser
+                                        @endforeach
+                            </datalist>
 
-                        @error('position')
+                            @error('position')
                             <span class="text-danger">{{ $errors->first('position') }}</span>
-                        @enderror
-                    </div>
+                            @enderror
+                        </div>
 
-                    <div class="mb-3">
-                        <label class="form-label" for="date">Date</label>
-                        <input id="date" class="datepicker form-control @error('report_date') is-invalid @enderror" type="text" name="report_date" value="{{ empty(old('report_date')) ? $report->report_date->toEuropeanDate() : old('report_date')}}" required>
-                        @error('report_date')
+                        <div class="mb-3">
+                            <div class="row">
+                                <div class="col-md-12 mb-3 d-flex gap-3 align-items-end">
+                                    <div class="flex-fill">
+                                        <label class="form-label" for="date">Date</label>
+                                        <input type="text" class="form-control datepicker  @error('report_date') is-invalid @enderror" name="report_date" id="date" value="{{ old('report_date') ?? \Carbon\Carbon::parse($evaluation->date)->format('d/m/Y') }}" required>
+                                    </div>
+
+                                    <div class="flex-fill">
+                                        <label class="form-label" for="startTime">Start (Zulu)</label>
+                                        <input id="startTime" class="form-control" type="time" name="startTime" value="{{ old('position', \Carbon\Carbon::create($evaluation->start)->format('H:i')) }}" required>
+                                    </div>
+
+                                    <div class="flex-fill">
+                                        <label class="form-label" for="endTime">End (Zulu)</label>
+                                        <input id="endTime" class="form-control" type="time" name="endTime" placeholder="12:00" value="{{ old('position', \Carbon\Carbon::create($evaluation->start)->format('H:i')) }}" required>
+                                    </div>
+                                </div>
+                            </div>
+                            @error('report_date')
                             <span class="text-danger">{{ $errors->first('report_date') }}</span>
-                        @enderror
-                    </div>
+                            @enderror
+                        </div>
 
-                    <div class="mb-3">
-                        <label class="form-label" for="contentBox">Report</label>
-                        <textarea class="form-control @error('content') is-invalid @enderror" name="content" id="contentBox" rows="8" placeholder="Write the report here.">{{ empty(old('content')) ? $report->content : old('content') }}</textarea>
-                        @error('content')
-                            <span class="text-danger">{{ $errors->first('content') }}</span>
-                        @enderror
-                    </div>
+                        <div class="mb-3">
+                            <h5 class="fw-bold">Session Information</h5>
+                            <div class="row">
+                                <div class="col-md-2 mb-3">
+                                    <label for="sessionPerformed" class="form-label">Session Type</label>
+                                    <select name="sessionPerformed" id="sessionPerformed" class="form-select">
+                                        <option value="Online" {{ old('sessionPerformed', $evaluation->sessionPerformed ?? '') == 'Online' ? 'selected' : '' }}>Online</option>
+                                        <option value="Sweatbox" {{ old('sessionPerformed', $evaluation->sessionPerformed ?? '') == 'Sweatbox' ? 'selected' : '' }}>Sweatbox</option>
+                                    </select>
+                                </div>
 
-                    <div class="mb-3">
-                        <label class="form-label" for="contentimprove">Areas to improve</label>
-                        <textarea class="form-control @error('contentimprove') is-invalid @enderror" name="contentimprove" id="contentimprove" rows="4" placeholder="In which areas do the student need to improve?">{{ empty(old('contentimprove')) ? $report->contentimprove : old('contentimprove') }}</textarea>
-                        @error('contentimprove')
-                            <span class="text-danger">{{ $errors->first('contentimprove') }}</span>
-                        @enderror
-                    </div>
+                                <div class="col-md-2 mb-3">
+                                    <label for="complexity" class="form-label">Complexity</label>
+                                    <select name="complexity" id="complexity" class="form-select">
+                                        <option value="Low" {{ old('complexity', $evaluation->complexity ?? '') == 'Low' ? 'selected' : '' }}>Low</option>
+                                        <option value="Medium" {{ old('complexity', $evaluation->complexity ?? '') == 'Medium' ? 'selected' : '' }}>Medium</option>
+                                        <option value="High" {{ old('complexity', $evaluation->complexity ?? '') == 'High' ? 'selected' : '' }}>High</option>
+                                    </select>
+                                </div>
 
-                    <div class="mb-3 form-check">
-                        <input type="checkbox" value="1" class="form-check-input @error('draft') is-invalid @enderror" name="draft" id="draftCheck" {{ $report->draft ? "checked" : "" }}>
-                        <label class="form-check-label" name="draft" for="draftCheck">Save as draft</label>
-                        @error('draft')
-                            <span class="text-danger">{{ $errors->first('draft') }}</span>
-                        @enderror
-                    </div>
+                                <div class="col-md-2 mb-3">
+                                    <label for="workload" class="form-label">Workload</label>
+                                    <select name="workload" id="workload" class="form-select">
+                                        <option value="Low" {{ old('workload', $evaluation->workload ?? '') == 'Low' ? 'selected' : '' }}>Low</option>
+                                        <option value="Medium" {{ old('workload', $evaluation->workload ?? '') == 'Medium' ? 'selected' : '' }}>Medium</option>
+                                        <option value="High" {{ old('workload', $evaluation->workload ?? '') == 'High' ? 'selected' : '' }}>High</option>
+                                    </select>
+                                </div>
 
-                    @if (\Illuminate\Support\Facades\Gate::inspect('update', $report)->allowed())
-                        <button type="submit" class="btn btn-success">Update report</button>
-                    @endif
+                                <div class="col-md-2 mb-3">
+                                    <label for="trafficLoad" class="form-label">Traffic Load</label>
+                                    <select name="trafficLoad" id="trafficLoad" class="form-select">
+                                        <option value="Low" {{ old('trafficLoad', $evaluation->trafficLoad ?? '') == 'Low' ? 'selected' : '' }}>Low</option>
+                                        <option value="Medium" {{ old('trafficLoad', $evaluation->trafficLoad ?? '') == 'Medium' ? 'selected' : '' }}>Medium</option>
+                                        <option value="High" {{ old('trafficLoad', $evaluation->trafficLoad ?? '') == 'High' ? 'selected' : '' }}>High</option>
+                                    </select>
+                                </div>
 
-                    @if (\Illuminate\Support\Facades\Gate::inspect('delete', $report)->allowed())
-                        <a href="{{ route('training.report.delete', $report->id) }}" class="btn btn-danger" id="delete-btn" data-report="{{ $report->id }}">Delete report</a>
-                    @endif
-                </form>
+                                <div class="col-md-3 mb-3">
+                                    <label for="trainingPhase" class="form-label">Training Phase</label>
+                                    <select name="trainingPhase" id="trainingPhase" class="form-select">
+                                        <option value="Basic" {{ old('trainingPhase', $evaluation->trainingPhase ?? '') == 'Basic' ? 'selected' : '' }}>Basic</option>
+                                        <option value="PreIntermediate" {{ old('trainingPhase', $evaluation->trainingPhase ?? '') == 'PreIntermediate' ? 'selected' : '' }}>Pre-intermediate</option>
+                                        <option value="Intermediate" {{ old('trainingPhase', $evaluation->trainingPhase ?? '') == 'Intermediate' ? 'selected' : '' }}>Intermediate</option>
+                                        <option value="Advanced" {{ old('trainingPhase', $evaluation->trainingPhase ?? '') == 'Advanced' ? 'selected' : '' }}>Advanced</option>
+                                        <option value="ExamType" {{ old('trainingPhase', $evaluation->trainingPhase ?? '') == 'ExamType' ? 'selected' : '' }}>Exam Type</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+
+                    @foreach($itemsByCategory as $category => $categoryData)
+                            <h5 class="mt-4">{{ $categoryData['humanName'] }}</h5>
+                            <table class="table table-bordered">
+                                <thead>
+                                <tr>
+                                    <th style="width: 60%;">Description</th>
+                                    <th style="width: 8%;">Vote</th>
+                                    <th style="width: 32%;">Comment</th>
+                                </tr>
+                                </thead>
+                                <tbody>
+                                @foreach($categoryData['items'] as $i => $item)
+                                    <tr>
+                                        <td>{{ $item->description }}</td>
+                                        <td class="text-center">
+                                            <select class="form-select form-select-sm vote-select"
+                                                    name="results[{{ $item->item_id }}][vote]">
+                                                <option value="">Select</option>
+                                                <option value="I" {{ ($results[$item->item_id]->vote ?? '') == 'I' ? 'selected' : '' }}>I</option>
+                                                <option value="S" {{ ($results[$item->item_id]->vote ?? '') == 'S' ? 'selected' : '' }}>S</option>
+                                                <option value="G" {{ ($results[$item->item_id]->vote ?? '') == 'G' ? 'selected' : '' }}>G</option>
+                                            </select>
+                                        </td>
+                                        <td>
+                                            <textarea class="form-control comment-textarea"
+                                                name="results[{{ $item->item_id }}][comment]"
+                                                maxlength="255"
+                                                rows="1"
+                                               placeholder="Enter comment...">{{ old("results.$i.comment") ?? $results[$item->item_id]->comment ?? '' }}
+                                            </textarea>
+                                        </td>
+                                    </tr>
+                                @endforeach
+                                </tbody>
+                            </table>
+
+                        @endforeach                    <hr>
+
+                        <div class="mb-3">
+                            <label class="form-label" for="finalReview">Final Review</label>
+                            <textarea class="form-control @error('finalReview') is-invalid @enderror" name="finalReview" id="finalReview" rows="4" placeholder="In which areas do the student need to improve?">{{ old('finalReview', $evaluation->finalReview ?? '') }}</textarea>
+                            @error('finalReview')
+                            <span class="text-danger">{{ $errors->first('finalReview') }}</span>
+                            @enderror
+                        </div>
+
+
+                        {{--@if(session()->get('onetimekey') == null)
+                            <div class="mb-3 form-check">
+                                <input type="checkbox" value="1" class="form-check-input @error('draft') is-invalid @enderror" name="draft" id="draftCheck">
+                                <label class="form-check-label" name="draft" for="draftCheck">Save as draft</label>
+                                @error('draft')
+                                <span class="text-danger">{{ $errors->first('draft') }}</span>
+                                @enderror
+                            </div>
+                        @endif--}}
+
+                        <button type="submit" id="training-submit-btn" class="btn btn-success">Save report</button>
+                    </form>
+                </div>
             </div>
         </div>
     </div>
-    <div class="col-xl-5 col-lg-12 col-md-12 mb-12">
-        <div class="card shadow mb-4">
-            <div class="card-header bg-primary py-3 d-flex flex-row align-items-center justify-content-between">
-                <h6 class="m-0 fw-bold text-white">
-                    Manage attachments
-                </h6>
-            </div>
-            <div class="card-body">
-
-                <div>
-                    @if(count($report->attachments) == 0)
-                        <i>This report has no attachments.</i>
-                    @endif
-
-                    @foreach($report->attachments as $attachment)
-                        <div data-id="{{ $attachment->id }}">
-                            <a href="{{ route('training.object.attachment.show', ['attachment' => $attachment]) }}" target="_blank">
-                                {{ $attachment->file->name }}
-                            </a>
-                            <i data-attachment="{{ $attachment->id }}" class="fa fa-lg fa-trash text-danger deleteAttachmentBtn" style="cursor: pointer;"></i>
-                        </div>
-                    @endforeach
-                </div>
-
-                <hr>
-
-                <div class="alert alert-warning">
-                    <i class="fas fa-info-circle"></i>
-                    Please save your report before uploading attachments to avoid losing your changes.
-                </div>
-
-                <form method="post" id="file-form" action="{{ route('training.object.attachment.store', ['trainingObjectType' => 'report', 'trainingObject' => $report->id]) }}" enctype="multipart/form-data">
-                    @csrf
-
-                    <div class="mb-3">
-                        <label class="form-label" for="attachments">Attachments</label>
-                        <div>
-                            <input type="file" name="file" id="add-file" class="@error('file') is-invalid @enderror" accept=".pdf, .xls, .xlsx, .doc, .docx, .txt, .png, .jpg, .jpeg" onchange="uploadFile(this)" multiple>
-                        </div>
-                        @error('file')
-                            <span class="text-danger">{{ $errors->first('file') }}</span>
-                        @enderror
-                    </div>
-
-                </form>
-
-            </div>
-        </div>
-    </div>
-</div>
 
 
 @endsection
 
 @section('js')
 
-<!-- Attachment management -->
-<script>
+    <!-- Flatpickr -->
+    @vite(['resources/js/flatpickr.js', 'resources/sass/flatpickr.scss'])
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            var defaultDate = "{{ old('report_date') }}"
+            document.querySelector('.datepicker').flatpickr({ disableMobile: true, minDate: "{!! date('Y-m-d', strtotime('-1 months')) !!}", maxDate: "{!! date('Y-m-d') !!}", dateFormat: "d/m/Y", defaultDate: defaultDate, locale: {firstDayOfWeek: 1 } });
+        });
+    </script>
 
-    function uploadFile(input) {
-        if (input.value != null) {
-            document.getElementById('file-form').submit()
-        }
-    }
-
-    var deleteAttachmentBtn = document.querySelectorAll('.deleteAttachmentBtn');
-    deleteAttachmentBtn.forEach(function (btn) {
-        btn.addEventListener('click', function () {
-
-            let id = btn.dataset.attachment;
-
-            fetch('/training/attachment/'+id, {
-                method: "POST",
-                headers: {
-                    'Content-Type': 'application/x-www-form-urlencoded',
-                    'X-CSRF-TOKEN': "{!! csrf_token() !!}"
-                },
-                body: '_method=DELETE'
-            })
-            .then(response => {
-                if (response.ok) {
-                    document.querySelector('div[data-id="' + id + '"]').remove();
+    <!-- Markdown Editor -->
+    @vite(['resources/js/easymde.js', 'resources/sass/easymde.scss'])
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            var simplemde1 = new EasyMDE({
+                element: document.getElementById("contentBox"),
+                status: false,
+                toolbar: ["bold", "italic", "heading-3", "|", "quote", "unordered-list", "ordered-list", "|", "link", "preview", "side-by-side", "fullscreen", "|", "guide"],
+                insertTexts: {
+                    link: ["[","](link)"],
                 }
-            })
-            .catch(error => {
-                console.error("An error occurred while attempting to delete attachment:", error);
+            });
+            var simplemde2 = new EasyMDE({
+                element: document.getElementById("finalReview"),
+                status: false,
+                toolbar: ["bold", "italic", "heading-3", "|", "quote", "unordered-list", "ordered-list", "|", "link", "preview", "side-by-side", "fullscreen", "|", "guide"],
+                insertTexts: {
+                    link: ["[","](link)"],
+                }
+            });
+
+            var submitClicked = false
+            document.addEventListener("submit", function(event) {
+                if (event.target.tagName === "FORM") {
+                    submitClicked = true;
+                }
+            });
+
+            // Confirm closing window if there are unsaved changes
+            window.addEventListener('beforeunload', function (e) {
+                if(!submitClicked && (simplemde1.value() != '' || simplemde2.value() != '')){
+                    e.preventDefault();
+                    e.returnValue = '';
+                }
+            });
+        })
+
+
+        document.addEventListener('DOMContentLoaded', function() {
+            const voteSelects = document.querySelectorAll('.vote-select');
+
+            function updateColor(select) {
+                const val = select.value;
+                if(val === 'I') {
+                    select.style.backgroundColor = '#dc3545'; // red
+                    select.style.color = '#fff';
+                    select.style.fontWeight = 'bold';
+                } else if(val === 'S') {
+                    select.style.backgroundColor = '#90ee90'; // yellow
+                    select.style.color = '#000';
+                    select.style.fontWeight = 'bold';
+                } else if(val === 'G') {
+                    select.style.backgroundColor = '#198754'; // green
+                    select.style.color = '#fff';
+                    select.style.fontWeight = 'bold';
+                } else {
+                    select.style.backgroundColor = '';
+                    select.style.color = '';
+                }
+            }
+
+            voteSelects.forEach(select => {
+                updateColor(select); // initial color
+                select.addEventListener('change', () => updateColor(select));
             });
         });
-    });
-</script>
 
-<!-- Flatpickr -->
-@vite(['resources/js/flatpickr.js', 'resources/sass/flatpickr.scss'])
-<script>
-    document.addEventListener("DOMContentLoaded", function () {
-        var defaultDate = "{{ empty(old('created_at')) ? \Carbon\Carbon::make($report->created_at)->format('d/m/Y') : old('created_at') }}"
-        document.querySelector('.datepicker').flatpickr({ disableMobile: true, minDate: "{!! date('Y-m-d', strtotime('-1 months')) !!}", dateFormat: "d/m/Y", defaultDate: new Date("{{ $report->report_date }}"), locale: {firstDayOfWeek: 1 } });
-    });
-</script>
-
-<!-- Markdown Editor -->
-@vite(['resources/js/easymde.js', 'resources/sass/easymde.scss'])
-<script>
-    document.addEventListener("DOMContentLoaded", function () {
-        var simplemde1 = new EasyMDE({ 
-            element: document.getElementById("contentBox"), 
-            status: false, 
-            toolbar: ["bold", "italic", "heading-3", "|", "quote", "unordered-list", "ordered-list", "|", "link", "preview", "side-by-side", "fullscreen", "|", "guide"],
-            insertTexts: {
-                link: ["[","](link)"],
-            }
-        });
-        var simplemde2 = new EasyMDE({ 
-            element: document.getElementById("contentimprove"), 
-            status: false, 
-            toolbar: ["bold", "italic", "heading-3", "|", "quote", "unordered-list", "ordered-list", "|", "link", "preview", "side-by-side", "fullscreen", "|", "guide"],
-            insertTexts: {
-                link: ["[","](link)"],
-            }
-        });
-    })
-</script>
+    </script>
 
 @endsection

@@ -85,7 +85,6 @@ class TrainingExaminationController extends Controller
             }
         }
 
-
         // Save locally
         $examination = TrainingExamination::create([
             'position_id' => $position->id,

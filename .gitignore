@@ -27,5 +27,11 @@ yarn-error.log
 *.phpunit.result.cache
 coverage/*
 
+# composer and mise helpers
+.composer-installed
+
 # mkdocs
 docs_site/
+
+# php type generation
+_ide_helper_models.php

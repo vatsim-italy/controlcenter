@@ -167,7 +167,12 @@ class User extends Authenticatable
         return $this->hasMany(Feedback::class, 'reference_user_id');
     }
 
-    public function getNotificationEmailAttribute()
+    public function getPersonalNotificationEmailAttribute()
+    {
+        return $this->email;
+    }
+
+    public function getWorkNotificationEmailAttribute()
     {
         if ($this->setting_workmail_address) {
             return $this->setting_workmail_address;
@@ -439,16 +444,18 @@ class User extends Authenticatable
      */
     public function isExaminer(?Area $area = null)
     {
-        if ($area == null) {
-            return $this->endorsements->where('type', 'EXAMINER')->where('revoked', false)->where('expired', false)->count();
+        $query = $this->endorsements()
+            ->where('type', 'EXAMINER')
+            ->where('revoked', false)
+            ->where('expired', false);
+
+        if ($area === null) {
+            return $query->exists();
         }
 
-        // Check if the user has an active examiner endorsement for the area
-        if ($this->endorsements->where('type', 'EXAMINER')->where('revoked', false)->where('expired', false)->first()) {
-            return $this->endorsements->where('type', 'EXAMINER')->where('revoked', false)->where('expired', false)->first()->areas()->wherePivot('area_id', $area->id)->count();
-        }
-
-        return false;
+        return $query->whereHas('areas', function ($q) use ($area) {
+            $q->where('areas.id', $area->id);
+        })->exists();
     }
 
     /**

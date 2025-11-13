@@ -316,7 +316,7 @@ class User extends Authenticatable
     {
         $trainings = Training::where('status', '>=', 1)->whereHas('mentors', function ($query) {
             $query->where('user_id', $this->id);
-        })->with('area', 'ratings', 'reports', 'user')->orderBy('id')->get();
+        })->with('area', 'ratings', 'reports', 'user', 'evaluations.results.item')->orderBy('id')->get();
 
         return $trainings;
     }

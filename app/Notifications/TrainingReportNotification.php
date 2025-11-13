@@ -3,6 +3,7 @@
 namespace App\Notifications;
 
 use App\Mail\TrainingMail;
+use App\Models\Evaluation;
 use App\Models\Training;
 use App\Models\TrainingReport;
 use Illuminate\Bus\Queueable;
@@ -15,18 +16,18 @@ class TrainingReportNotification extends Notification implements ShouldQueue
 
     private $training;
 
-    private $report;
+    private $evaluation;
 
     /**
      * Create a new notification instance.
      *
-     * @param  TrainingReport  $report  to reference
+     * @param  Evaluation  $evaluation  to reference
      * @param  string  $key
      */
-    public function __construct(Training $training, TrainingReport $report)
+    public function __construct(Training $training, Evaluation $evaluation)
     {
         $this->training = $training;
-        $this->report = $report;
+        $this->evaluation = $evaluation;
     }
 
     /**
@@ -49,7 +50,7 @@ class TrainingReportNotification extends Notification implements ShouldQueue
     public function toMail($notifiable)
     {
         $textLines = [
-            'Your mentor ' . $this->report->author->name . ' has written a new report for your training.',
+            'Your mentor ' . $this->evaluation->author->name . ' has written a new report for your training.',
         ];
 
         return (new TrainingMail('Training Report', $this->training, $textLines, null, route('training.show', $this->training->id), 'Read Report'))
@@ -66,7 +67,7 @@ class TrainingReportNotification extends Notification implements ShouldQueue
     {
         return [
             'training_id' => $this->training->id,
-            'training_report_id' => $this->report->id,
+            'training_report_id' => $this->evaluation->id,
         ];
     }
 }

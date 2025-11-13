@@ -9,10 +9,10 @@ return [
     */
     'S2' => [
         'GENERAL' => [
-            'correctConnectNetwork' => 'Correctly Connects to the Network',
-            'understandsRole'       => 'Understans the Role and Responsability',
-            'demonstratesSoftware'  => 'Demonstrate correct use of the Software',
-            'professionalBehavior'  => 'Demonstrate professional behaviour',
+            'correctConnectNetwork' => 'Correctly connects to the network',
+            'understandsRole'       => 'Understands the role and responsability',
+            'demonstratesSoftware'  => 'Demonstrates correct use of the software',
+            'professionalBehavior'  => 'Demonstrates professional behaviour and pleasant attitude',
             'generalComments'       => 'General Comments',
         ],
 

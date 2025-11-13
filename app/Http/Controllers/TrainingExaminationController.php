@@ -51,12 +51,12 @@ class TrainingExaminationController extends Controller
 
         $positions = Position::where('rating', '=', $ratingNumber)->get();
 
-
         $examiners = $training->area->mentors->sortBy('name');
         $taskRecipients = collect(Group::admins()->merge(Group::moderators()));
         $taskPopularAssignees = TaskController::getPopularAssignees($training->area);
 
         $examFields = config('pdf')[$lastRating] ?? [];
+
         return view('training.exam.create', compact('training', 'positions', 'taskRecipients', 'taskPopularAssignees', 'examiners', 'examFields', 'lastRating'));
     }
 
@@ -92,7 +92,6 @@ class TrainingExaminationController extends Controller
             'examiner_id' => Auth::id(),
             'examination_date' => $date->format('Y-m-d'),
         ]);
-
 
         if (array_key_exists('result', $data)) {
             $examination->update(['result' => $data['result']]);

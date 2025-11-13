@@ -387,22 +387,20 @@ class TrainingController extends Controller
         $examinations = TrainingExamination::where('training_id', $training->id)->get();
         $reports = TrainingReport::where('training_id', $training->id)->get();
         $reportsNew = Evaluation::with(['results.item'])  // eager load results and their items
-        ->where('training_id', $training->id)
+            ->where('training_id', $training->id)
             ->get()->sortByDesc('created_at');
 
         $reportsAndExams = collect($reports)->merge($examinations);
-        $reportsAndExams = $reportsAndExams->sort(function ($a, $b) {
-            // Define the correct date to sort by model type is report or exam
-            is_a($a, '\App\Models\TrainingReport') ? $aSort = Carbon::parse($a->report_date) : $aSort = Carbon::parse($a->examination_date);
-            is_a($b, '\App\Models\TrainingReport') ? $bSort = Carbon::parse($b->report_date) : $bSort = Carbon::parse($b->examination_date);
+        $reportsAndExams = $reportsAndExams
+            ->map(function ($item) {
+                $item->sort_date = $item instanceof \App\Models\TrainingReport
+                    ? Carbon::parse($item->report_date)
+                    : Carbon::parse($item->examination_date);
 
-            // Sorting algorithm
-            if ($aSort == $bSort) {
-                return (is_a($a, '\App\Models\TrainingExamination')) ? -1 : 1;
-            }
-
-            return ($aSort > $bSort) ? -1 : 1;
-        });
+                return $item;
+            })
+            ->sortByDesc('sort_date')
+            ->values();
 
         $trainingMentors = $training->area->mentors->sortBy('name');
         $statuses = TrainingController::$statuses;

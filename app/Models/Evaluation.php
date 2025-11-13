@@ -71,4 +71,9 @@ class Evaluation extends Model
             return $result->item->category;
         });
     }
+
+    public function author()
+    {
+        return $this->belongsTo(User::class, 'examiner_id');
+    }
 }

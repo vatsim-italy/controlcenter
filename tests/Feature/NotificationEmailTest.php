@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use App\Models\Area;
+use App\Models\Evaluation;
 use App\Models\Group;
 use App\Models\Training;
 use App\Models\TrainingExamination;
@@ -75,7 +76,7 @@ class NotificationEmailTest extends TestCase
     public static function personalEmailNotificationProvider(): array
     {
         return [
-            'training report' => [TrainingReportNotification::class, TrainingReport::class],
+            'training evaluation' => [TrainingReportNotification::class, Evaluation::class],
             'training interest' => [TrainingInterestNotification::class, TrainingInterest::class],
             'training examination' => [TrainingExamNotification::class, TrainingExamination::class],
         ];

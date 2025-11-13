@@ -170,6 +170,11 @@ class TrainingReportController extends Controller
         //    $training->user->notify(new TrainingReportNotification($training, $report));
         }
         */
+
+        if ($training->user->setting_notify_newreport) {
+            $training->user->notify(new TrainingReportNotification($training, $evaluation));
+        }
+
         if (($key = session()->get('onetimekey')) != null) {
             // Remove the link
             OneTimeLink::where('key', $key)->delete();

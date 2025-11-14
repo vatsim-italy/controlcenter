@@ -95,9 +95,21 @@ class TrainingReportController extends Controller
         ['name' => $lastRating, 'number' => $ratingNumber] = $this->getRatingInfo($training);
 
         $evaluationItems = $this->getEvaluationItems($lastRating, $ratingNumber);
-
         $positions = $evaluationItems['positions'];
         $itemsByCategory = $evaluationItems['itemsByCategory'];
+
+        if ($positions->count() == 0) {
+            // Extract ICAO prefix (first 4 chars)
+            $icao = substr($lastRating, 0, 4);
+
+            // Extract position type (APP, TWR, GND, DEP, etc.)
+            $parts = explode('_', $lastRating);
+            $position = end($parts);
+
+            // Get openable positions that match ICAO + controller type
+            $positions = Position::where('callsign', 'LIKE', "{$icao}%")
+                ->get();
+        }
 
         // Keep the onetimekey for another request
         $request->session()->reflash();
@@ -301,6 +313,10 @@ class TrainingReportController extends Controller
      */
     protected function validateRequest()
     {
+        $training = request()->route('training');
+        $rating = $training->ratings->last()->name;
+        $itemsCount = EvaluationItem::where('rating', $rating)->count();
+
         return request()->validate([
             'report_date' => 'required|date_format:d/m/Y',
             'startTime' => 'required|date_format:H:i',
@@ -312,7 +328,7 @@ class TrainingReportController extends Controller
             'trainingPhase' => 'required',
             'finalReview' => 'nullable|string|max:512',
             'position' => 'nullable',
-            'results' => 'required|array',
+            'results' => $itemsCount > 0 ? 'required|array' : 'nullable|array',
             'results.*.vote' => 'nullable|in:I,S,G',
             'results.*.comment' => 'nullable|string|max:255',
         ]);

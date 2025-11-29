@@ -180,6 +180,7 @@
                             <textarea class="form-control @error('finalReview') is-invalid @enderror" name="finalReview"
                                       id="finalReview" rows="4"
                                       placeholder="In which areas do the student need to improve?">{{ old('contentimprove') }}</textarea>
+                                      <div id="charCount" class="text-muted">0/1000 characters</div>
                             @error('finalReview')
                             <span class="text-danger">{{ $errors->first('finalReview') }}</span>
                             @enderror
@@ -245,6 +246,18 @@
                     link: ["[", "](link)"],
                 }
             });
+
+            const charCount = document.getElementById('charCount');
+            function updateCharCount() {
+                const length = simplemde2.value().length;
+                charCount.textContent = `${length}/1000 characters`;
+            }
+
+            // Initial count
+            updateCharCount();
+
+            // Update on every change
+            simplemde2.codemirror.on("change", updateCharCount);
 
             var submitClicked = false
             document.addEventListener("submit", function (event) {

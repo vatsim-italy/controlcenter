@@ -160,7 +160,8 @@
                                 </tbody>
                             </table>
 
-                        @endforeach                    <hr>
+                        @endforeach                    
+                        <hr>
 
                         <div class="mb-3">
                             <label class="form-label" for="finalReview">Final Review</label>
@@ -168,6 +169,7 @@
                             @error('finalReview')
                             <span class="text-danger">{{ $errors->first('finalReview') }}</span>
                             @enderror
+                            <div id="charCount" class="text-muted">0/1000 characters</div>
                         </div>
 
 
@@ -222,6 +224,18 @@
                     link: ["[","](link)"],
                 }
             });
+
+            const charCount = document.getElementById('charCount');
+            function updateCharCount() {
+                const length = simplemde2.value().length;
+                charCount.textContent = `${length}/1000 characters`;
+            }
+
+            // Initial count
+            updateCharCount();
+
+            // Update on every change
+            simplemde2.codemirror.on("change", updateCharCount);
 
             var submitClicked = false
             document.addEventListener("submit", function(event) {

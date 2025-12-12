@@ -303,6 +303,14 @@
         // New request chart
         var newRequestsData = {!! json_encode($newRequests) !!}
 
+        var datasets = [];
+        for (const rating in newRequestsData) {
+            datasets.push({
+                label: rating,
+                data: newRequestsData[rating]
+            })
+        }
+
         var barChartData = {
             labels: [moment().subtract(6, "month").startOf("month").format('MMMM'),
                     moment().subtract(5, "month").startOf("month").format('MMMM'),
@@ -367,6 +375,14 @@
 
         // Completed requests chart
         var completedRequestsData = {!! json_encode($completedRequests) !!}
+
+        var datasets = [];
+        for (const rating in completedRequestsData) {
+            datasets.push({
+                label: rating,
+                data: completedRequestsData[rating]
+            })
+        }
 
         var barChartData = {
             labels: [moment().subtract(6, "month").startOf("month").format('MMMM'),
@@ -433,6 +449,14 @@
 
         // Closed requests chart
         var closedRequestsData = {!! json_encode($closedRequests) !!}
+
+        var datasets = [];
+        for (const rating in closedRequestsData) {
+            datasets.push({
+                label: rating,
+                data: closedRequestsData[rating]
+            })
+        }
 
         var barChartData = {
             labels: [moment().subtract(6, "month").startOf("month").format('MMMM'),
@@ -568,11 +592,11 @@
             datasets: [{
                 label: 'Failed',
                 backgroundColor: 'rgb(200, 100, 100)',
-                data: passFailRequestsData["Failed"]
+                data: passFailRequestsData["FAILED"]
             }, {
                 label: 'Passed',
                 backgroundColor: 'rgb(100, 200, 100)',
-                data: passFailRequestsData["Passed"]
+                data: passFailRequestsData["PASSED"]
             }]
 
         };

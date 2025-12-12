@@ -178,19 +178,6 @@
         </div>
     </div>
 
-    <div class="col-xl-4 col-md-12 mb-12 d-none d-xl-block d-lg-block d-md-block">
-        <div class="card shadow mb-4">
-            <div class="card-header bg-primary py-3 d-flex flex-row align-items-center justify-content-between">
-                <h6 class="m-0 fw-bold text-white">
-                    Training sessions per rating last 6 months
-                </h6>
-            </div>
-            <div class="card-body">
-                 <canvas id="sessionsPerRating"></canvas>
-            </div>
-        </div>
-    </div>
-
     <div class="col-xl-4 col-md-12 mb-12">
         <div class="card shadow mb-4">
             <div class="card-header bg-primary py-3 d-flex flex-row align-items-center justify-content-between">
@@ -227,8 +214,6 @@
 
 @section('js')
 @vite('resources/js/chart.js')
-
-
 <script>
 
     document.addEventListener("DOMContentLoaded", function () {
@@ -240,7 +225,6 @@
 
         var requestData = {!! json_encode($totalRequests) !!}
 
-        var color = Chart.helpers.color;
         var cfg = {
             type: 'line',
             data: {
@@ -319,28 +303,7 @@
                     moment().subtract(2, "month").startOf("month").format('MMMM'),
                     moment().subtract(1, "month").startOf("month").format('MMMM'),
                     moment().startOf("month").format('MMMM')],
-            datasets: [{
-                label: 'S1',
-                backgroundColor: 'rgb(250, 150, 150)',
-                data: newRequestsData["S1"]
-            }, {
-                label: 'S2',
-                backgroundColor: 'rgb(200, 100, 100)',
-                data: newRequestsData["S2"]
-            }, {
-                label: 'S3',
-                backgroundColor: 'rgb(100, 100, 200)',
-                data: newRequestsData["S3"]
-            }, {
-                label: 'C1',
-                backgroundColor: 'rgb(100, 200, 100)',
-                data: newRequestsData["C1"]
-            }, {
-                label: 'C3',
-                backgroundColor: 'rgb(150, 200, 100)',
-                data: newRequestsData["C3"]
-            }]
-
+            datasets: datasets
         };
 
         var mix = document.getElementById("newTrainingRequests").getContext('2d');
@@ -392,28 +355,7 @@
                     moment().subtract(2, "month").startOf("month").format('MMMM'),
                     moment().subtract(1, "month").startOf("month").format('MMMM'),
                     moment().startOf("month").format('MMMM')],
-            datasets: [{
-                label: 'S1',
-                backgroundColor: 'rgb(250, 150, 150)',
-                data: completedRequestsData["S1"]
-            }, {
-                label: 'S2',
-                backgroundColor: 'rgb(200, 100, 100)',
-                data: completedRequestsData["S2"]
-            }, {
-                label: 'S3',
-                backgroundColor: 'rgb(100, 100, 200)',
-                data: completedRequestsData["S3"]
-            }, {
-                label: 'C1',
-                backgroundColor: 'rgb(100, 200, 100)',
-                data: completedRequestsData["C1"]
-            }, {
-                label: 'C3',
-                backgroundColor: 'rgb(150, 200, 100)',
-                data: completedRequestsData["C3"]
-            }]
-
+            datasets: datasets
         };
 
         var mix = document.getElementById("completedTrainingRequests").getContext('2d');
@@ -466,28 +408,7 @@
                     moment().subtract(2, "month").startOf("month").format('MMMM'),
                     moment().subtract(1, "month").startOf("month").format('MMMM'),
                     moment().startOf("month").format('MMMM')],
-            datasets: [{
-                label: 'S1',
-                backgroundColor: 'rgb(250, 150, 150)',
-                data: closedRequestsData["S1"]
-            }, {
-                label: 'S2',
-                backgroundColor: 'rgb(200, 100, 100)',
-                data: closedRequestsData["S2"]
-            }, {
-                label: 'S3',
-                backgroundColor: 'rgb(100, 100, 200)',
-                data: closedRequestsData["S3"]
-            }, {
-                label: 'C1',
-                backgroundColor: 'rgb(100, 200, 100)',
-                data: closedRequestsData["C1"]
-            }, {
-                label: 'C3',
-                backgroundColor: 'rgb(150, 200, 100)',
-                data: closedRequestsData["C3"]
-            }]
-
+            datasets: datasets
         };
 
         var mix = document.getElementById("closedTrainingRequests").getContext('2d');
@@ -510,64 +431,6 @@
                             stepSize: 1
                         }
                     }
-                }
-            }
-        });
-    });
-</script>
-
-<script>
-    document.addEventListener("DOMContentLoaded", function () {
-
-        // Original object from PHP
-        var newRequestsData = {!! json_encode($sessionsPerRating) !!};
-
-        // Build labels for last 7 months
-        var monthLabels = [];
-        var monthNumbers = [];
-        for (var i = 6; i >= 0; i--) {
-            var m = moment().subtract(i, "month");
-            monthLabels.push(m.format('MMMM'));
-            monthNumbers.push(m.month() + 1); // moment months are 0-based
-        }
-
-        // Convert the object to arrays per dataset
-        var datasets = [];
-        var colors = {
-            'S1': 'rgb(250, 150, 150)',
-            'S2': 'rgb(200, 100, 100)',
-            'S3': 'rgb(100, 100, 200)',
-            'C1': 'rgb(100, 200, 100)',
-            'C3': 'rgb(150, 200, 100)'
-        };
-
-        Object.keys(newRequestsData).forEach(function (rating) {
-            var values = newRequestsData[rating].map(v => parseFloat(v) || 0);
-
-            // If data has exactly 7 elements, use it directly
-            if (values.length === 7 && colors[rating]) {
-                datasets.push({
-                    label: rating,
-                    backgroundColor: colors[rating],
-                    data: values
-                });
-            }
-        });
-
-        var barChartData = {
-            labels: monthLabels,
-            datasets: datasets
-        };
-
-        var ctx = document.getElementById("sessionsPerRating").getContext('2d');
-        new Chart(ctx, {
-            type: 'bar',
-            data: barChartData,
-            options: {
-                responsive: true,
-                scales: {
-                    x: { stacked: true },
-                    y: { stacked: true, ticks: { stepSize: 1 } }
                 }
             }
         });

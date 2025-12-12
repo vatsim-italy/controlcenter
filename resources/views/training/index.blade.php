@@ -73,11 +73,19 @@
                                             data-bs-placement="right" 
                                             title="{{ str_replace(["\r\n", "\r", "\n"], '&#013;', $notes) }}"
                                             >
-                                            {{ $statuses[$training->status]["text"] }}
+                                            @if($training->status == \App\Helpers\TrainingStatus::IN_QUEUE->value && $training->ratings->toArray()[0]['name'] == 'S1')
+                                                Awaiting Entry Exam
+                                            @else
+                                                {{ $statuses[$training->status]["text"] }}
+                                            @endif
                                         </a>
                                     @else
                                         <a href="/training/{{ $training->id }}">
-                                            {{ $statuses[$training->status]["text"] }}
+                                            @if($training->status == \App\Helpers\TrainingStatus::IN_QUEUE->value && $training->ratings->toArray()[0]['name'] == 'S1')
+                                                Awaiting Entry Exam
+                                            @else
+                                                {{ $statuses[$training->status]["text"] }}
+                                            @endif
                                         </a>
                                     @endif
                                     

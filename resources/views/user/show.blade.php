@@ -636,30 +636,46 @@
                 .then(data => {
                     if(data && data.length > 0) {
 
-                        // Process each connection and calculate hours
-                        data.forEach(function (connection) {
-                            connection.logontime = new Date(connection.logontime * 1000)
-                            connection.logofftime = new Date(connection.logofftime * 1000)
-                            connection.hours = parseFloat(((connection.logofftime - connection.logontime) / 1000 / 60 / 60).toFixed(1))
-                            connection.callsignSuffix = connection.callsign.split('_').pop()
-                        })
-
-                        // Create chart labels based on the last 11 months
-                        var activity = []
-
-                        for (var i = 11; i >= 0; i--) {
-                            activity[new Date(new Date().setMonth(new Date().getMonth() - i)).toLocaleString('default', { month: 'short' })] = 0
+                        // Prepare last 12 months of labels
+                        let months = [];
+                        for (let i = 11; i >= 0; i--) {
+                            months.push(
+                                new Date(new Date().setMonth(new Date().getMonth() - i))
+                                    .toLocaleString('default', { month: 'short' })
+                            );
                         }
 
-                        data.forEach(function (connection) {
-                            var month = connection.logontime.toLocaleString('default', { month: 'short' })
-                            activity[month] += connection.hours
-                        })
+                        // Initialize counters
+                        let activityLIXX = {};
+                        let activityOutside = {};
 
-                        // Define labels and chart data
-                        var chartLabels = Object.keys(activity)
-                        var chartData = Object.values(activity)
+                        months.forEach(m => {
+                            activityLIXX[m] = 0;
+                            activityOutside[m] = 0;
+                        });
 
+                        // Process each connection
+                        data.forEach(conn => {
+                            conn.logontime = new Date(conn.logontime * 1000);
+                            conn.logofftime = new Date(conn.logofftime * 1000);
+                            conn.hours = (conn.logofftime - conn.logontime) / 1000 / 60 / 60;
+
+                            let month = conn.logontime.toLocaleString('default', { month: 'short' });
+                            let prefix2 = conn.callsign.slice(0, 2).toUpperCase(); // First two letters
+
+                            if (prefix2 === "LI" || prefix2 === "LM") {
+                                activityLIXX[month] += conn.hours;
+                            } else {
+                                activityOutside[month] += conn.hours;
+                            }
+                        });
+
+                        let totActivity = {};
+                        months.forEach(m => {
+                            totActivity[m] = activityLIXX[m] + activityOutside[m];
+                        });
+                        let chartLabels = Object.keys(totActivity);
+                        console.log(activityLIXX)
                         // Create the chart
                         var chart = new Chart(
                             document.getElementById('activityChart'),
@@ -668,14 +684,29 @@
                                 data: {
                                     labels: chartLabels,
                                     datasets: [{
-                                        label: 'Hours online',
-                                        data: chartData,
+                                        label: 'LIXX',
+                                        data: Object.values(activityLIXX),
                                         backgroundColor: 'rgba(54, 162, 235, 0.2)',
                                         borderColor: 'rgb(54, 162, 235)',
                                         borderWidth: 1
-                                    }]
+                                    },
+                                    {
+                                        label: 'Outside',
+                                        data: Object.values(activityOutside),
+                                        backgroundColor: 'rgba(255, 99, 132, 0.5)',
+                                        borderColor: 'rgb(255, 99, 132)',
+                                        borderWidth: 1
+                                    }
+                                ]
                                 },
-                            }
+                                options: {
+                                    responsive: true,
+                                    scales: {
+                                        x: { stacked: true },
+                                        y: { stacked: true }
+                                    }
+                                }
+                            },
                         );
 
                     } else {

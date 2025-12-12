@@ -88,7 +88,11 @@
                         @if($training->status == \App\Helpers\TrainingStatus::PRE_TRAINING->value && $training->pre_training_completed )
                             <i class="fas fa-check text-success"></i>
                         @endif
-                        {{ $statuses[$training->status]["text"] }}
+                        @if($training->status == \App\Helpers\TrainingStatus::IN_QUEUE->value && $training->ratings->toArray()[0]['name'] == 'S1')
+                            Awaiting Entry Exam
+                        @else
+                            {{ $statuses[$training->status]["text"] }}
+                        @endif
                         {{ isset($training->paused_at) ? ' (PAUSED)' : '' }}
                     </dd>
 

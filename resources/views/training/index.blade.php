@@ -56,6 +56,13 @@
                                         <i class="fas fa-check text-success"></i>
                                     @endif
 
+                                    @php
+                                        $ratings = $training->ratings;
+                                        $hasSingleEntryExamRating =
+                                            $ratings->count() === 1 &&
+                                            in_array($ratings->first()->name, ['S1', 'S2'], true);
+                                    @endphp
+
                                     @if($training->activities->where('type', 'COMMENT')->count())
 
                                         @php
@@ -65,30 +72,30 @@
                                             }
                                         @endphp
 
-                                        <a 
+                                        <a
                                             href="/training/{{ $training->id }}"
-                                            class="link-tooltip" 
-                                            data-bs-toggle="tooltip" 
-                                            data-bs-html="true" 
-                                            data-bs-placement="right" 
+                                            class="link-tooltip"
+                                            data-bs-toggle="tooltip"
+                                            data-bs-html="true"
+                                            data-bs-placement="right"
                                             title="{{ str_replace(["\r\n", "\r", "\n"], '&#013;', $notes) }}"
                                             >
-                                            @if($training->status == \App\Helpers\TrainingStatus::IN_QUEUE->value && $training->ratings->toArray()[0]['name'] == 'S1')
+                                            @if($training->status === \App\Helpers\TrainingStatus::IN_QUEUE->value && $hasSingleEntryExamRating)
                                                 Awaiting Entry Exam
                                             @else
-                                                {{ $statuses[$training->status]["text"] }}
+                                                {{ $statuses[$training->status]['text'] }}
                                             @endif
                                         </a>
                                     @else
                                         <a href="/training/{{ $training->id }}">
-                                            @if($training->status == \App\Helpers\TrainingStatus::IN_QUEUE->value && $training->ratings->toArray()[0]['name'] == 'S1')
+                                            @if($training->status === \App\Helpers\TrainingStatus::IN_QUEUE->value && $hasSingleEntryExamRating)
                                                 Awaiting Entry Exam
                                             @else
-                                                {{ $statuses[$training->status]["text"] }}
+                                                {{ $statuses[$training->status]['text'] }}
                                             @endif
                                         </a>
                                     @endif
-                                    
+
                                     {{ isset($training->paused_at) ? ' (PAUSED)' : '' }}
                                 </td>
                                 <td><a href="{{ route('user.show', $training->user->id) }}">{{ $training->user->id }}</a></td>

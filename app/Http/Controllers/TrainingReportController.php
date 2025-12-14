@@ -326,7 +326,7 @@ class TrainingReportController extends Controller
             'workload' => 'required',
             'trafficLoad' => 'required',
             'trainingPhase' => 'required',
-            'finalReview' => 'nullable|string|max:1024',
+            'finalReview' => 'nullable|string|max:2500',
             'position' => 'nullable',
             'results' => $itemsCount > 0 ? 'required|array' : 'nullable|array',
             'results.*.vote' => 'nullable|in:I,S,G',

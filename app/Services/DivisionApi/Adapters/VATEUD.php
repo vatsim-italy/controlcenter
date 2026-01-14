@@ -321,15 +321,34 @@ class VATEUD implements DivisionApiContract
                 break;
         }
 
-        if ($id == 33) {
-            $rating = 'S1 Entry';
-        } else if ($id == 36) {
-            $rating = 'S2 Entry';
-        } else if ($id == 45) {
-            $rating = 'T1 Milano';
-        } else if ($id == 45) {
-            $rating = 'INS';
+        switch ($id) {
+            case 33:
+                $rating = 'S1 Entry';
+                break;
+            case 36:
+                $rating = 'S2 Entry';
+                break;
+            case 45:
+                $rating = 'T1 Milano';
+                break;
+            case 46:
+                $rating = 'INS';
+                break;
+            case 60:
+                $rating = 'T1 LIRF GND/DEL';
+                break;
+            case 74:
+                $rating = 'T1 LIRF TWR';
+                break;
+            case 75:
+                $rating = 'T1 LIMC GND/DEL';
+                break;
+            case 76:
+                $rating = 'T1 LIMC TWR';
+                break;
+            
         }
+
 
         return $rating;
     }

@@ -54,7 +54,19 @@ class UpdateQueueCalculation extends Command
                 foreach ($rating->trainings->where('area_id', $area->id)->whereNotNull('created_at')->whereNull('paused_at') as $training) {
                     // Include training with GRP ratings inside
                     if ($training->ratings->count() >= 1 && $training->ratings->first()->vatsim_rating) {
-                        if ($training->status == TrainingStatus::IN_QUEUE->value ) {
+
+                        if($training->ratings->first()->vatsim_rating == 2 || $training->ratings->first()->vatsim_rating == 3) {
+                            if ($training->status == TrainingStatus::PRE_TRAINING->value && $training->pre_training_completed) {
+                                $trainingCreated = $training->created_at;
+
+                                // Calculate the difference in seconds with Carbon, then subtract the paused time if any.
+                                $waitingTime = (int) $trainingCreated->diffInSeconds(Carbon::now(), true);
+                                $waitingTime = $waitingTime - $training->paused_length;
+
+                                // Inject this specific training's record into the average calculation
+                                array_push($averageData, $waitingTime);
+                            }    
+                        } else if ($training->status == TrainingStatus::IN_QUEUE->value ) {
                             $trainingCreated = $training->created_at;
 
                             // Calculate the difference in seconds with Carbon, then subtract the paused time if any.

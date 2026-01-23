@@ -3,6 +3,7 @@
 namespace Database\Factories;
 
 use App\Models\TrainingExamination;
+use App\Models\Position;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 class TrainingExaminationFactory extends Factory
@@ -25,7 +26,7 @@ class TrainingExaminationFactory extends Factory
 
         return [
             'examination_date' => $date,
-            'position_id' => \App\Models\Position::query()->inRandomOrder()->first()->id,
+            'position_id' => Position::factory(),
             'result' => $this->faker->randomElement([
                 'PASSED', 'FAILED', 'INCOMPLETE', 'POSTPONED',
             ]),

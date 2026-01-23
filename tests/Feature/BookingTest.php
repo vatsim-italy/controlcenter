@@ -213,7 +213,10 @@ class BookingTest extends TestCase
         );
 
         $response->assertInvalid();
-        $response->assertRedirectBackWithErrors(['duration' => 'Booking needs to have a valid duration!']);
+        $response->assertInvalid([
+            'duration' => 'Booking needs to have a valid duration!',
+        ]);
+        $response->assertRedirect('/booking');
     }
 
     #[Test]

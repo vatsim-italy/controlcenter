@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Models\Area;
 use App\Models\Evaluation;
 use App\Models\EvaluationItem;
 use App\Models\Training;
@@ -24,12 +25,19 @@ class TrainingEvaluationsTest extends TestCase
     {
         parent::setUp();
 
+        $area = Area::factory()->create();
+
         // Create a trainee with a training
         $this->trainee = User::factory()->create();
         $this->training = Training::factory()->create([
             'user_id' => $this->trainee->id,
+            'area_id' => $area->id,
+            'status' => 2
+
         ]);
-        $this->training->ratings()->attach(Rating::find(4));
+
+        $attachedRating = Rating::find(4);
+        $this->training->ratings()->attach($attachedRating);
 
         $this->evaluationItems = EvaluationItem::factory()->count(5)->create();
 
@@ -141,8 +149,11 @@ class TrainingEvaluationsTest extends TestCase
         ];
 
         $this->actingAs($mentor)
-            ->patch(route('training.report.update', $evaluation), $updateData)
-            ->assertRedirect(route('training.show', $evaluation->training_id));
+            ->patch(route('training.report.update', [
+                'training' => $this->training->id,
+                'evaluation' => $evaluation->eval_id,
+            ]), $updateData)
+            ->assertRedirect(route('training.show', $this->training->id));
 
         $this->assertDatabaseHas('evaluations', ['eval_id' => $evaluation->eval_id, 'finalReview' => 'Updated']);
     }

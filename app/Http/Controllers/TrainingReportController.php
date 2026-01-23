@@ -130,7 +130,7 @@ class TrainingReportController extends Controller
 
         $this->authorize('create', [TrainingReport::class, $training]);
 
-        $data = $this->validateRequest();
+        $data = $this->validateRequest($training);
         $data['written_by_id'] = Auth::id();
         $data['training_id'] = $training->id;
 
@@ -252,7 +252,7 @@ class TrainingReportController extends Controller
     {
         $this->authorize('update', $evaluation);
 
-        $data = $this->validateRequest();
+        $data = $this->validateRequest($evaluation->training);
 
         // Update evaluation date if provided
         if (isset($data['report_date'])) {
@@ -311,9 +311,8 @@ class TrainingReportController extends Controller
      *
      * @return mixed
      */
-    protected function validateRequest()
+    protected function validateRequest(Training $training)
     {
-        $training = request()->route('training');
         $rating = $training->ratings->last()->name;
         $itemsCount = EvaluationItem::where('rating', $rating)->count();
 

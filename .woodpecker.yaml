@@ -1,0 +1,50 @@
+services:
+  # This starts a real database for your tests to hit
+  database:
+    image: mariadb:10.11
+    environment:
+      - MYSQL_DATABASE=control_center_test
+      - MYSQL_ALLOW_EMPTY_PASSWORD=yes
+
+pipeline:
+  # 1. Test Suite
+  test-app:
+    image: shivammathur/node-php:latest # Pre-built image with PHP + Node
+    environment:
+      - DB_CONNECTION=mysql
+      - DB_HOST=database
+      - DB_DATABASE=control_center_test
+      - DB_USERNAME=root
+      - DB_PASSWORD=
+    commands:
+      # Wait for database to be ready (standard CI practice)
+      - while ! nc -z database 3306; do sleep 1; done
+      # Setup App
+      - composer install --no-interaction --prefer-dist
+      - cp .env.example .env
+      - php artisan key:generate
+      - php artisan migrate --force
+      # Run Tests
+      - ./vendor/bin/phpunit --color=always --testdox
+    when:
+      path:
+        exclude: [ "**.md" ]
+
+  # 2. Build & Push to GHCR
+  build-container:
+    image: plugins/docker
+    settings:
+      registry: ghcr.io
+      repo: ghcr.io/vatsim-italy/control-center
+      username: 
+        from_secret: ghcr_user
+      password: 
+        from_secret: ghcr_token
+      # Multi-platform support
+      platforms: linux/amd64
+      auto_tag: true
+    when:
+      event: [push, tag]
+      branch: main
+      path:
+        exclude: [ "**.md" ]

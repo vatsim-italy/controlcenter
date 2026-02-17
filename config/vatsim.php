@@ -40,5 +40,5 @@ return [
     'division_api_driver' => env('VATSIM_DIVISION_API_DRIVER'),
     'division_api_url' => env('VATSIM_DIVISION_API_URL'),
     'division_api_token' => env('VATSIM_DIVISION_API_TOKEN'),
-
+    'statsim_api_token' => env('STATSIM_API_KEY'),
 ];

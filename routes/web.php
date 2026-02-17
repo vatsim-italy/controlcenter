@@ -58,6 +58,7 @@ Route::middleware(['auth', 'activity', 'suspended'])->group(function () {
     Route::get('/trainings/history', [TrainingController::class, 'history'])->name('requests.history');
     Route::get('/users', [UserController::class, 'index'])->name('users');
     Route::get('/users/other', [UserController::class, 'indexOther'])->name('users.other');
+    Route::get('/statsim/{vatsimId}', [UserController::class, 'fetchUserStatsFromStatsim'])->name('statsim');
 
     // Endorsements
     Route::controller(EndorsementController::class)->group(function () {

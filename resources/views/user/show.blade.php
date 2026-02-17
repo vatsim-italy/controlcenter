@@ -631,93 +631,96 @@
         document.addEventListener("DOMContentLoaded", function () {
 
             // Fetch activity data
-            fetch("https://statsim.net/atc/vatsimid/?vatsimid={{ $user->id }}&period=custom&from={{ now()->subMonths(11)->toDateString() }}+00%3A00&to={{ now()->toDateString() }}+22%3A00&json=true")
+            fetch("/statsim/{{ $user->id }}/?from={{ now()->subMonths(11)->toDateString() }}+00%3A00&to={{ now()->toDateString() }}+22%3A00")
                 .then(response => response.json())
                 .then(data => {
-                    if(data && data.length > 0) {
-
-                        // Prepare last 12 months of labels
+                    if (data && data.length > 0) {
+                        // 1. Prepare last 12 months of labels (remains the same)
                         let months = [];
                         for (let i = 11; i >= 0; i--) {
                             months.push(
                                 new Date(new Date().setMonth(new Date().getMonth() - i))
-                                    .toLocaleString('default', { month: 'short' })
+                                    .toLocaleString('default', {month: 'short'})
                             );
                         }
 
-                        // Initialize counters
                         let activityLIXX = {};
                         let activityOutside = {};
-
                         months.forEach(m => {
                             activityLIXX[m] = 0;
                             activityOutside[m] = 0;
                         });
 
-                        // Process each connection
+                        // 2. Process each connection using NEW property names
                         data.forEach(conn => {
-                            conn.logontime = new Date(conn.logontime * 1000);
-                            conn.logofftime = new Date(conn.logofftime * 1000);
-                            conn.hours = (conn.logofftime - conn.logontime) / 1000 / 60 / 60;
+                            // Parse ISO strings directly into Date objects
+                            const logon = new Date(conn.loggedOn);
+                            const logoff = new Date(conn.loggedOff);
 
-                            let month = conn.logontime.toLocaleString('default', { month: 'short' });
-                            let prefix2 = conn.callsign.slice(0, 2).toUpperCase(); // First two letters
+                            // Calculate hours: (diff in ms) / ms / sec / min
+                            const hours = (logoff - logon) / 1000 / 60 / 60;
 
-                            if (prefix2 === "LI" || prefix2 === "LM") {
-                                activityLIXX[month] += conn.hours;
-                            } else {
-                                activityOutside[month] += conn.hours;
+                            // Determine month label and callsign prefix
+                            let month = logon.toLocaleString('default', {month: 'short'});
+                            let prefix2 = conn.callsign.slice(0, 2).toUpperCase();
+
+                            // 3. Increment counters
+                            // Only increment if the month exists in our chart labels
+                            if (activityLIXX.hasOwnProperty(month)) {
+                                if (prefix2 === "LI" || prefix2 === "LM") {
+                                    activityLIXX[month] += hours;
+                                } else {
+                                    activityOutside[month] += hours;
+                                }
                             }
                         });
 
-                        let totActivity = {};
-                        months.forEach(m => {
-                            totActivity[m] = activityLIXX[m] + activityOutside[m];
-                        });
-                        let chartLabels = Object.keys(totActivity);
-                        console.log(activityLIXX)
-                        // Create the chart
+                        // 4. Create the chart (rest of your Chart.js config remains the same)
                         var chart = new Chart(
                             document.getElementById('activityChart'),
                             {
                                 type: 'bar',
                                 data: {
-                                    labels: chartLabels,
-                                    datasets: [{
-                                        label: 'LIXX',
-                                        data: Object.values(activityLIXX),
-                                        backgroundColor: 'rgba(54, 162, 235, 0.2)',
-                                        borderColor: 'rgb(54, 162, 235)',
-                                        borderWidth: 1
-                                    },
-                                    {
-                                        label: 'Outside',
-                                        data: Object.values(activityOutside),
-                                        backgroundColor: 'rgba(255, 99, 132, 0.5)',
-                                        borderColor: 'rgb(255, 99, 132)',
-                                        borderWidth: 1
-                                    }
-                                ]
+                                    labels: months, // Use the generated month labels directly
+                                    datasets: [
+                                        {
+                                            label: 'LIXX',
+                                            data: months.map(m => activityLIXX[m]),
+                                            backgroundColor: 'rgba(54, 162, 235, 0.2)',
+                                            borderColor: 'rgb(54, 162, 235)',
+                                            borderWidth: 1
+                                        },
+                                        {
+                                            label: 'Outside',
+                                            data: months.map(m => activityOutside[m]),
+                                            backgroundColor: 'rgba(255, 99, 132, 0.5)',
+                                            borderColor: 'rgb(255, 99, 132)',
+                                            borderWidth: 1
+                                        }
+                                    ]
                                 },
                                 options: {
                                     responsive: true,
                                     scales: {
-                                        x: { stacked: true },
-                                        y: { stacked: true }
+                                        x: {stacked: true},
+                                        y: {
+                                            stacked: true,
+                                            title: {display: true, text: 'Hours'}
+                                        }
                                     }
                                 }
-                            },
+                            }
                         );
 
                     } else {
-                        document.getElementById('activityChart').parentElement.innerHTML = '<p class="mb-0">No data available</p>'
+                        document.getElementById('activityChart').parentElement.innerHTML = '<p class="mb-0">No data available</p>';
                     }
                 })
                 .catch(error => {
-                    console.error(error);
+                    console.error('Fetch Error:', error);
                     alert('An error occurred while fetching STATSIM hours data.');
                 });
         });
-    </script>
+        </script>
 
 @endsection

@@ -490,4 +490,40 @@ class UserController extends Controller
 
         return $users;
     }
+
+    public function fetchUserStatsFromStatsim(Request $request, $vatsimId)
+    {
+        // Validate input
+        $request->validate([
+            'from' => 'required|date',
+            'to' => 'required|date'
+        ]);
+
+        try {
+            $response = Http::withHeaders([
+                'accept' => 'application/json',
+                'X-API-Key' => config('vatsim.statsim_api_token'),
+            ])->get(
+                "https://api.statsim.net/api/Atcsessions/VatsimId/?vatsimId={$vatsimId}&from={$request->query('from')}&to={$request->query('to')}",
+            );
+
+            if ($response->failed()) {
+
+                return response()->json([
+                    'error' => 'Failed to fetch data from Statsim',
+                    'test' => config('statsim_api_token'),
+                    'details' => $response->body()
+                ], $response->status());
+            }
+
+            return response()->json($response->json());
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'error' => 'Something went wrong',
+                'message' => $e->getMessage()
+            ], 500);
+        }
+    }
+
 }

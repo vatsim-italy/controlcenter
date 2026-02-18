@@ -297,13 +297,13 @@ class TrainingReportController extends Controller
      *
      * @throws \Illuminate\Auth\Access\AuthorizationException
      */
-    public function destroy(TrainingReport $report)
+    public function destroy(Evaluation $evaluation)
     {
-        $this->authorize('delete', $report);
+        $this->authorize('delete', $evaluation);
 
-        $report->delete();
+        $evaluation->delete();
 
-        return redirect(route('training.show', $report->training->id))->withSuccess('Training report deleted');
+        return redirect(route('training.show', $evaluation->training->id))->withSuccess('Training report deleted');
     }
 
     /**

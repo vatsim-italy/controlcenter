@@ -586,6 +586,12 @@
                                                                 <i class="fa fa-clipboard"></i> Show
                                                             </a>
                                                         @endcan
+
+                                                        @can('delete', $report)
+                                                            <a href="{{ route('training.report.delete', $report->eval_id) }}">
+                                                                <i class="fa fa-trash"></i> Delete
+                                                            </a>
+                                                        @endcan
                                                     </div>
                                             </small>
 

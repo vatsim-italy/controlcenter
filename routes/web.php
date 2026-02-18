@@ -131,7 +131,7 @@ Route::middleware(['auth', 'activity', 'suspended'])->group(function () {
         Route::get('/training/{training}/report/create', 'create')->name('training.report.create');
         Route::post('/training/{training}/report', 'store')->name('training.report.store');
         Route::patch('/training/report/{evaluation}', 'update')->name('training.report.update');
-        Route::get('/training/report/{report}/delete', 'destroy')->name('training.report.delete');
+        Route::get('/training/report/{evaluation}/delete', 'destroy')->name('training.report.delete');
         Route::get('/training/report/show/{evaluation}', 'show')->name('training.report.show');
     });
 

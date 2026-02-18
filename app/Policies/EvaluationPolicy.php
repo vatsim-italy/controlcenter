@@ -82,7 +82,18 @@ class EvaluationPolicy
      */
     public function delete(User $user, Evaluation $ev)
     {
-        if($user->isAdmin() || $user->isModerator($ev->training->area) || ($user->id === $ev->examiner_id) && $user->isMentor($trainingReport->training->area)) {
+        /**
+         * allow only if:
+         * - user is admin
+         * otherwise
+         * - if it's the creator of that trainingreport, only after 10 minutes of its creation
+         */
+        $isAdmin = $user->isAdmin();
+
+        $isMentorAllowed = $user->id === $ev->examiner_id && $ev->created_at->gt(now()->subMinutes(5));
+
+
+        if($isAdmin || $isMentorAllowed) {
             return Response::allow();
         } else {
             return Response::deny('Only moderators and the author of the training report can delete it.');

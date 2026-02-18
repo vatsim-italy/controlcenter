@@ -58,7 +58,7 @@ class UpdateAtcHours extends Command
         // Fetch members
         $optionalUserIdFilter = $this->argument('user');
         $ratedMembers = User::getAssociatedActiveAtcMembers(! Setting::get('atcActivityAllowReactivation'), $optionalUserIdFilter);
-        $members = User::whereIn('id', $optionalUserIdFilter)->get();
+        $members = User::whereIn('id', $ratedMembers->pluck('id'))->get();
 
         $this->info('Found ' . $members->count() . ' members to update. This will take ' . round((($members->count() * 10) / 60), 1) . ' minutes to respect API throttle.');
 

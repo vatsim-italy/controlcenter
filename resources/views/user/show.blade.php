@@ -631,7 +631,7 @@
         document.addEventListener("DOMContentLoaded", function () {
 
             // Fetch activity data
-            fetch("/statsim/{{ $user->id }}/?from={{ now()->subMonths(11)->toDateString() }}+00%3A00&to={{ now()->toDateString() }}+22%3A00")
+            fetch("{{ route('statsim', $user->id) }}?from={{ now()->subMonths(11)->toDateString() }}+00%3A00&to={{ now()->toDateString() }}+22%3A00")
                 .then(response => response.json())
                 .then(data => {
                     if (data && data.length > 0) {

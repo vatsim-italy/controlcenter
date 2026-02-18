@@ -7,6 +7,7 @@ use App;
 use App\Helpers\Vatsim;
 use App\Models\Area;
 use App\Models\AtcActivity;
+use App\Models\TrainingActivityLog;
 use App\Models\User;
 use Carbon\Carbon;
 use Illuminate\Console\Command;
@@ -57,7 +58,7 @@ class UpdateAtcHours extends Command
         // Fetch members
         $optionalUserIdFilter = $this->argument('user');
         $ratedMembers = User::getAssociatedActiveAtcMembers(! Setting::get('atcActivityAllowReactivation'), $optionalUserIdFilter);
-        $members = User::whereIn('id', $ratedMembers->pluck('id'))->get();
+        $members = User::whereIn('id', $optionalUserIdFilter)->get();
 
         $this->info('Found ' . $members->count() . ' members to update. This will take ' . round((($members->count() * 10) / 60), 1) . ' minutes to respect API throttle.');
 
@@ -130,7 +131,46 @@ class UpdateAtcHours extends Command
      */
     private function updateHoursForMember(User $member, Collection $sessions, Collection $divisionCallsignPrefixes)
     {
-        $this->info('Updating ATC hours for member: ' . $member->id);
+        $this->info("Updating ATC hours for member: {$member->id}");
+
+        foreach ($member->trainings as $training) {
+            if ($training->status != 2) {
+                continue;
+            }
+
+            $now = now();
+
+            $lastMonth = $now->copy()->subMonth();
+
+            $lastMonthSessions = $sessions->filter(function ($session) use ($lastMonth) {
+                $sessionDate = Carbon::parse($session->start);
+
+                return $sessionDate->month === $lastMonth->month && $sessionDate->year === $lastMonth->year;
+            });
+
+            $monthHours = $lastMonthSessions->sum('minutes_on_callsign') / 60;
+            $meetsRequirement = $monthHours >= 6;
+
+            $existingLog = TrainingActivityLog::where([
+                'training_id' => $training->id,
+                'user_id' => $member->id,
+                'month' => $lastMonth->month,
+                'year' => $lastMonth->year,
+            ])->first();
+
+            if ($existingLog) {
+                continue;
+            }
+
+            TrainingActivityLog::create([
+                'training_id' => $training->id,
+                'user_id' => $member->id,
+                'month' => $lastMonth->month,
+                'year' => $lastMonth->year,
+                'hours' => $monthHours,
+                'requirement_met' => $meetsRequirement,
+            ]);
+        }
 
         foreach (Area::all() as $area) {
             $hoursActiveInArea = $sessions

@@ -102,7 +102,16 @@
                         @endif
                         {{ isset($training->paused_at) ? ' (PAUSED)' : '' }}
                     </dd>
-
+                    @if(!$meetsRequirement)
+                        <dd class="d-flex align-items-center">
+                            <span class="badge rounded-pill bg-light text-dark border me-2">
+                                <i class="fa fa-triangle-exclamation text-warning"></i>
+                            </span>
+                            <div>
+                                <strong class="text-danger">Requirement Not Met</strong>
+                            </div>
+                        </dd>
+                    @endif
                     <dt>Type</dt>
                     <dd><i class="{{ $types[$training->type]["icon"] }} text-primary"></i>&ensp;{{ $types[$training->type]["text"] }}</dd>
 
@@ -127,9 +136,9 @@
                             {{ $training->user->id }}
                         </a>
                         <button type="button" onclick="navigator.clipboard.writeText('{{ $training->user->id }}')"><i class="fas fa-copy"></i></button>
-                        <a href="https://stats.vatsim.net/stats/{{ $training->user->id }}" target="_blank" title="VATSIM Stats" class="link-btn me-1"><i class="fas fa-chart-simple"></i></button></a>
+                        <a href="https://stats.vatsim.net/stats/{{ $training->user->id }}" target="_blank" title="VATSIM Stats" class="link-btn me-1"><i class="fas fa-chart-simple"></i></a>
                         @if($training->user->division == 'EUD')
-                            <a href="https://core.vateud.net/manage/controller/{{ $training->user->id }}/view" target="_blank" title="VATEUD Core Profile" class="link-btn"><i class="fa-solid fa-earth-europe"></i></button></a>
+                            <a href="https://core.vateud.net/manage/controller/{{ $training->user->id }}/view" target="_blank" title="VATEUD Core Profile" class="link-btn"><i class="fa-solid fa-earth-europe"></i></a>
                         @endif
                     </dd>
 

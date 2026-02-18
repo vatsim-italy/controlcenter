@@ -15,6 +15,7 @@ use App\Models\Training;
 use App\Models\TrainingExamination;
 use App\Models\TrainingInterest;
 use App\Models\TrainingReport;
+use App\Models\TrainingActivityLog;
 use App\Models\User;
 use App\Notifications\TrainingClosedNotification;
 use App\Notifications\TrainingCreatedNotification;
@@ -412,6 +413,14 @@ class TrainingController extends Controller
         $trainingInterests = TrainingInterest::where('training_id', $training->id)->orderBy('created_at', 'DESC')->get();
         $activeTrainingInterest = TrainingInterest::where('training_id', $training->id)->where('expired', false)->get()->count();
 
+        $lastMonth = now()->copy()->subMonth();
+        $meetsRequirement = TrainingActivityLog::where([
+            'training_id' => $training->id,
+            'user_id' => $training->user->id,
+            'month' => $lastMonth->month,
+            'year' => $lastMonth->year,
+        ])->first();
+
         $relatedTasks = $training->tasks->sortByDesc('created_at');
 
         $requestTypes = TaskController::getTypes();
@@ -441,7 +450,7 @@ class TrainingController extends Controller
             $divisionExams = $divisionExams->sortByDesc('created_at');
         }
 
-        return view('training.show', compact('training', 'reportsAndExams', 'trainingMentors', 'statuses', 'types', 'experiences', 'activities', 'trainingInterests', 'activeTrainingInterest', 'relatedTasks', 'requestTypes', 'requestPopularAssignees', 'divisionExams', 'reportsNew'));
+        return view('training.show', compact('training', 'reportsAndExams', 'trainingMentors', 'statuses', 'types', 'experiences', 'activities', 'trainingInterests', 'activeTrainingInterest', 'relatedTasks', 'requestTypes', 'requestPopularAssignees', 'divisionExams', 'reportsNew', 'meetsRequirement'));
     }
 
     /**

@@ -102,7 +102,7 @@
                         @endif
                         {{ isset($training->paused_at) ? ' (PAUSED)' : '' }}
                     </dd>
-                    @if(!$meetsRequirement)
+                    @if($meetsRequirement && $meetsRequirement->requirement_met === false)
                         <dd class="d-flex align-items-center">
                             <span class="badge rounded-pill bg-light text-dark border me-2">
                                 <i class="fa fa-triangle-exclamation text-warning"></i>

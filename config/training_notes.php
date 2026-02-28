@@ -57,7 +57,7 @@ return [
         ],
 
         'ATC_COMPETENCIES' => [
-            'runwayConfig'         => 'Selects a suitable runway configuration and generates ATIS Issues appropriate clearance and departure instructions',
+            'runwayConfig'         => 'Selects a suitable runway configuration and generates ATIS',
             'clearanceInstructions'=> 'Issues appropriate clearance and departure instructions',
             'groundClearances'     => 'Issues appropriate ground movement clearances',
             'takeoffLanding'       => 'Issues appropriate Take-off/Landing clearances',

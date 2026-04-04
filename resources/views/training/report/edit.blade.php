@@ -59,12 +59,12 @@
 
                                     <div class="flex-fill">
                                         <label class="form-label" for="startTime">Start (Zulu)</label>
-                                        <input id="startTime" class="form-control" type="time" name="startTime" value="{{ old('position', \Carbon\Carbon::create($evaluation->start)->format('H:i')) }}" required>
+                                        <input id="startTime" class="form-control" type="time" name="startTime" value="{{ old('startTime', \Carbon\Carbon::create($evaluation->start)->format('H:i')) }}" required>
                                     </div>
 
                                     <div class="flex-fill">
                                         <label class="form-label" for="endTime">End (Zulu)</label>
-                                        <input id="endTime" class="form-control" type="time" name="endTime" placeholder="12:00" value="{{ old('position', \Carbon\Carbon::create($evaluation->start)->format('H:i')) }}" required>
+                                        <input id="endTime" class="form-control" type="time" name="endTime" placeholder="12:00" value="{{ old('endTime', \Carbon\Carbon::create($evaluation->end)->format('H:i')) }}" required>
                                     </div>
                                 </div>
                             </div>
@@ -160,7 +160,7 @@
                                 </tbody>
                             </table>
 
-                        @endforeach                    
+                        @endforeach
                         <hr>
 
                         <div class="mb-3">

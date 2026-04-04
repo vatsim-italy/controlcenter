@@ -369,7 +369,8 @@
                                             <td>
                                                 @if (isset($endorsement->valid_to))
                                                     @if ($endorsement->valid_to->isFuture())
-                                                        {{ $endorsement->valid_to->diffForHumans() }}
+                                                        {{ $endorsement->valid_to->toEuropeanDateTime() }}<br>
+                                                        <span class="text-muted small">({{ $endorsement->valid_to->diffForHumans() }})</span>
                                                     @else
                                                         {{ $endorsement->valid_to->toEuropeanDateTime() }}
                                                     @endif

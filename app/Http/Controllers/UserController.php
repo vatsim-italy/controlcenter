@@ -3,8 +3,10 @@
 namespace App\Http\Controllers;
 
 use anlutro\LaravelSettings\Facade as Setting;
+use App\Exceptions\StatisticsApiException;
 use App\Facades\DivisionApi;
 use App\Helpers\Vatsim;
+use App\Http\Requests\StatisticsSessionsRequest;
 use App\Models\Area;
 use App\Models\AtcActivity;
 use App\Models\Feedback;
@@ -12,6 +14,7 @@ use App\Models\Group;
 use App\Models\TrainingExamination;
 use App\Models\TrainingReport;
 use App\Models\User;
+use App\Services\StatisticsService;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -113,7 +116,7 @@ class UserController extends Controller
      *
      * @throws \Illuminate\Auth\Access\AuthorizationException
      */
-    public function show(User $user)
+    public function show(User $user, StatisticsService $statisticsService)
     {
         $this->authorize('view', $user);
         $userAuth =  Auth::user();
@@ -189,7 +192,21 @@ class UserController extends Controller
             $divisionExams = $divisionExams->sortByDesc('created_at');
         }
 
-        return view('user.show', compact('user', 'groups', 'areas', 'trainings', 'statuses', 'types', 'endorsements', 'areas', 'divisionExams', 'atcActivityHours', 'totalHours', 'userFeedbacks'));
+        // Fetch recent ATC sessions from StatSim via the StatisticsService.
+        // Use the same general window as the activity chart (last 12 months)
+        // and then narrow to a configurable \"recent\" period for the table.
+        $to = Carbon::now()->endOfDay();
+        $from = (clone $to)->subMonths(11)->startOfDay();
+
+        $recentAtcSessions = collect(
+            $statisticsService->getRecentSessionsSummary(
+                (string) $user->id,
+                $from,
+                $to
+            )
+        );
+
+        return view('user.show', compact('user', 'groups', 'areas', 'trainings', 'statuses', 'types', 'endorsements', 'areas', 'divisionExams', 'atcActivityHours', 'totalHours', 'recentAtcSessions', 'userFeedbacks'));
     }
 
     /**
@@ -490,40 +507,4 @@ class UserController extends Controller
 
         return $users;
     }
-
-    public function fetchUserStatsFromStatsim(Request $request, $vatsimId)
-    {
-        // Validate input
-        $request->validate([
-            'from' => 'required|date',
-            'to' => 'required|date'
-        ]);
-
-        try {
-            $response = Http::withHeaders([
-                'accept' => 'application/json',
-                'X-API-Key' => config('vatsim.statsim_api_token'),
-            ])->get(
-                "https://api.statsim.net/api/Atcsessions/VatsimId/?vatsimId={$vatsimId}&from={$request->query('from')}&to={$request->query('to')}",
-            );
-
-            if ($response->failed()) {
-
-                return response()->json([
-                    'error' => 'Failed to fetch data from Statsim',
-                    'test' => config('statsim_api_token'),
-                    'details' => $response->body()
-                ], $response->status());
-            }
-
-            return response()->json($response->json());
-
-        } catch (\Exception $e) {
-            return response()->json([
-                'error' => 'Something went wrong',
-                'message' => $e->getMessage()
-            ], 500);
-        }
-    }
-
 }

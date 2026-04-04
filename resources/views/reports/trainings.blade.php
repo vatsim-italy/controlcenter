@@ -2,22 +2,37 @@
 
 @section('title', 'Training Statistics')
 @section('title-flex')
-    <div>
-        <i class="fas fa-filter text-secondary"></i>&nbsp;Filter&nbsp;
-        @if(\Auth::user()->isAdmin())
-            <a class="btn btn-sm {{ $filterName == "All Areas" ? 'btn-primary' : 'btn-outline-primary' }}" href="{{ route('reports.trainings') }}">All Areas</a>
-        @endif
-        @foreach($areas as $area)
-            @if(\Auth::user()->isModeratorOrAbove($area))
-                <a class="btn btn-sm {{ $filterName == $area->name ? 'btn-primary' : 'btn-outline-primary' }}" href="{{ route('reports.training.area', $area->id) }}">{{ $area->name }}</a>
+    <div class="d-flex align-items-center flex-wrap gap-2">
+        <form method="GET" action="{{ url()->current() }}" class="d-flex flex-column align-items-start me-3">
+            <div class="input-group input-group-sm w-auto">
+                <span class="input-group-text"><i class="fas fa-calendar me-1"></i>Date</span>
+                <span class="input-group-text">From</span>
+                <input type="text" name="start_date" class="form-control datepicker @error('start_date') is-invalid @enderror" value="{{ old('start_date', $startDate ? $startDate->format('Y-m-d') : '') }}" placeholder="Start Date">
+                <span class="input-group-text">To</span>
+                <input type="text" name="end_date" class="form-control datepicker @error('end_date') is-invalid @enderror" value="{{ old('end_date', $endDate ? $endDate->format('Y-m-d') : '') }}" placeholder="End Date">
+                <button type="submit" class="btn btn-primary btn-sm"><i class="fas fa-search"></i></button>
+                @if(old('start_date', request('start_date')) || old('end_date', request('end_date')))
+                    <a href="{{ url()->current() }}" class="btn btn-secondary btn-sm"><i class="fas fa-times"></i></a>
+                @endif
+            </div>
+        </form>
+
+        <div class="input-group input-group-sm w-auto">
+            <span class="input-group-text"><i class="fas fa-filter me-1"></i>Filter</span>
+            @if(\Auth::user()->isAdmin())
+                <a class="btn btn-sm {{ $filterName == "All Areas" ? 'btn-primary' : 'btn-outline-primary' }}" href="{{ route('reports.trainings', ['start_date' => request('start_date'), 'end_date' => request('end_date')]) }}">All Areas</a>
             @endif
-        @endforeach
+            @foreach($areas as $area)
+                @if(\Auth::user()->isModeratorOrAbove($area))
+                    <a class="btn btn-sm {{ $filterName == $area->name ? 'btn-primary' : 'btn-outline-primary' }}" href="{{ route('reports.training.area', ['id' => $area->id, 'start_date' => request('start_date'), 'end_date' => request('end_date')]) }}">{{ $area->name }}</a>
+                @endif
+            @endforeach
+        </div>
     </div>
 @endsection
 @section('content')
 
 <div class="row">
-
     <div class="col-xl-3 col-md-6 mb-4">
     <div class="card border-left-secondary shadow h-100 py-2">
         <div class="card-body">
@@ -71,7 +86,7 @@
             <div class="card-body">
             <div class="row g-0 align-items-center">
                 <div class="col me-2">
-                <div class="fs-sm fw-bold text-success text-uppercase mb-1">Completed this year</div>
+                <div class="fs-sm fw-bold text-success text-uppercase mb-1">Completed{{ $startDate ? '' : ' this year' }}</div>
                 <div class="row g-0 align-items-center">
                     <div class="col-auto">
                         <div class="h5 mb-0 me-3 fw-bold text-gray-800">{{ $cardStats["completed"] }} requests</div>
@@ -91,7 +106,7 @@
             <div class="card-body">
             <div class="row g-0 align-items-center">
                 <div class="col me-2">
-                <div class="fs-sm fw-bold text-danger text-uppercase mb-1">Closed this year</div>
+                <div class="fs-sm fw-bold text-danger text-uppercase mb-1">Closed{{ $startDate ? '' : ' this year' }}</div>
                 <div class="row g-0 align-items-center">
                     <div class="col-auto">
                         <div class="h5 mb-0 me-3 fw-bold text-gray-800">{{ $cardStats["closed"] }} requests</div>
@@ -113,7 +128,7 @@
         <div class="card shadow mb-4">
             <div class="card-header bg-primary py-3 d-flex flex-row align-items-center justify-content-between">
                 <h6 class="m-0 fw-bold text-white">
-                    Training requests last 12 months
+                    Training requests{{ $startDate ? '' : ' last 12 months' }}
                 </h6>
             </div>
             <div class="card-body">
@@ -130,7 +145,7 @@
         <div class="card shadow mb-4">
             <div class="card-header bg-primary py-3 d-flex flex-row align-items-center justify-content-between">
                 <h6 class="m-0 fw-bold text-white">
-                    New requests last 6 months
+                    New requests{{ $startDate ? '' : ' last 6 months' }}
                 </h6>
             </div>
             <div class="card-body">
@@ -143,7 +158,7 @@
         <div class="card shadow mb-4">
             <div class="card-header bg-primary py-3 d-flex flex-row align-items-center justify-content-between">
                 <h6 class="m-0 fw-bold text-white">
-                    Completed requests last 6 months
+                    Completed requests{{ $startDate ? '' : ' last 6 months' }}
                 </h6>
             </div>
             <div class="card-body">
@@ -156,7 +171,7 @@
         <div class="card shadow mb-4">
             <div class="card-header bg-primary py-3 d-flex flex-row align-items-center justify-content-between">
                 <h6 class="m-0 fw-bold text-white">
-                    Closed requests last 6 months
+                    Closed requests{{ $startDate ? '' : ' last 6 months' }}
                 </h6>
             </div>
             <div class="card-body">
@@ -169,11 +184,24 @@
         <div class="card shadow mb-4">
             <div class="card-header bg-primary py-3 d-flex flex-row align-items-center justify-content-between">
                 <h6 class="m-0 fw-bold text-white">
-                    Passed and failed exams last 6 months
+                    Passed exams{{ $startDate ? '' : ' last 6 months' }}
                 </h6>
             </div>
             <div class="card-body">
-                <canvas id="TrainingPassFailRate"></canvas>
+                <canvas id="trainingPassedExams"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-xl-4 col-md-12 mb-12 d-none d-xl-block d-lg-block d-md-block">
+        <div class="card shadow mb-4">
+            <div class="card-header bg-primary py-3 d-flex flex-row align-items-center justify-content-between">
+                <h6 class="m-0 fw-bold text-white">
+                    Failed exams{{ $startDate ? '' : ' last 6 months' }}
+                </h6>
+            </div>
+            <div class="card-body">
+                <canvas id="trainingFailedExams"></canvas>
             </div>
         </div>
     </div>
@@ -209,17 +237,42 @@
     </div>
 </div>
 
-
 @endsection
 
 @section('js')
-@vite('resources/js/chart.js')
+@vite(['resources/js/chart.js', 'resources/js/flatpickr.js', 'resources/sass/flatpickr.scss'])
+<script>
+    function generateLegendLabelsWithTotal(chart) {
+        const labels = Chart.defaults.plugins.legend.labels.generateLabels(chart);
+        labels.forEach(label => {
+            const dataset = chart.data.datasets[label.datasetIndex];
+            const data = Array.isArray(dataset?.data) ? dataset.data : [];
+            const total = data.reduce((a, b) => a + b, 0);
+            label.text += ' (' + total + ')';
+        });
+        return labels;
+    }
+</script>
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        document.querySelectorAll('.datepicker').forEach(function (el) {
+            flatpickr(el, {
+                disableMobile: true,
+                dateFormat: "Y-m-d",
+                allowInput: true
+            });
+        });
+    });
+</script>
 <script>
 
     document.addEventListener("DOMContentLoaded", function () {
 
         // Total training amount chart
-        var ctx = document.getElementById('trainingChart').getContext('2d');
+        var trainingChartElement = document.getElementById('trainingChart');
+        if (!trainingChartElement) return;
+
+        var ctx = trainingChartElement.getContext('2d');
         ctx.canvas.width = 1000;
         ctx.canvas.height = 200;
 
@@ -285,6 +338,9 @@
     document.addEventListener("DOMContentLoaded", function () {
 
         // New request chart
+        var newTrainingRequestsElement = document.getElementById("newTrainingRequests");
+        if (!newTrainingRequestsElement) return;
+
         var newRequestsData = {!! json_encode($newRequests) !!}
 
         var datasets = [];
@@ -296,22 +352,23 @@
         }
 
         var barChartData = {
-            labels: [moment().subtract(6, "month").startOf("month").format('MMMM'),
-                    moment().subtract(5, "month").startOf("month").format('MMMM'),
-                    moment().subtract(4, "month").startOf("month").format('MMMM'),
-                    moment().subtract(3, "month").startOf("month").format('MMMM'),
-                    moment().subtract(2, "month").startOf("month").format('MMMM'),
-                    moment().subtract(1, "month").startOf("month").format('MMMM'),
-                    moment().startOf("month").format('MMMM')],
+            labels: {!! json_encode($labels) !!},
             datasets: datasets
         };
 
-        var mix = document.getElementById("newTrainingRequests").getContext('2d');
+        var mix = newTrainingRequestsElement.getContext('2d');
         var newTrainingRequests = new Chart(mix, {
             type: 'bar',
             data: barChartData,
             options: {
                 responsive: true,
+                plugins: {
+                    legend: {
+                        labels: {
+                            generateLabels: generateLegendLabelsWithTotal
+                        }
+                    }
+                },
                 scales: {
                     x: {
                         stacked: true,
@@ -337,6 +394,9 @@
     document.addEventListener("DOMContentLoaded", function () {
 
         // Completed requests chart
+        var completedTrainingRequestsElement = document.getElementById("completedTrainingRequests");
+        if (!completedTrainingRequestsElement) return;
+
         var completedRequestsData = {!! json_encode($completedRequests) !!}
 
         var datasets = [];
@@ -348,22 +408,23 @@
         }
 
         var barChartData = {
-            labels: [moment().subtract(6, "month").startOf("month").format('MMMM'),
-                    moment().subtract(5, "month").startOf("month").format('MMMM'),
-                    moment().subtract(4, "month").startOf("month").format('MMMM'),
-                    moment().subtract(3, "month").startOf("month").format('MMMM'),
-                    moment().subtract(2, "month").startOf("month").format('MMMM'),
-                    moment().subtract(1, "month").startOf("month").format('MMMM'),
-                    moment().startOf("month").format('MMMM')],
+            labels: {!! json_encode($labels) !!},
             datasets: datasets
         };
 
-        var mix = document.getElementById("completedTrainingRequests").getContext('2d');
+        var mix = completedTrainingRequestsElement.getContext('2d');
         var completedTrainingRequests = new Chart(mix, {
             type: 'bar',
             data: barChartData,
             options: {
                 responsive: true,
+                plugins: {
+                    legend: {
+                        labels: {
+                            generateLabels: generateLegendLabelsWithTotal
+                        }
+                    }
+                },
                 scales: {
                     x: {
                         stacked: true,
@@ -390,6 +451,9 @@
     document.addEventListener("DOMContentLoaded", function () {
 
         // Closed requests chart
+        var closedTrainingRequestsElement = document.getElementById("closedTrainingRequests");
+        if (!closedTrainingRequestsElement) return;
+
         var closedRequestsData = {!! json_encode($closedRequests) !!}
 
         var datasets = [];
@@ -401,22 +465,23 @@
         }
 
         var barChartData = {
-            labels: [moment().subtract(6, "month").startOf("month").format('MMMM'),
-                    moment().subtract(5, "month").startOf("month").format('MMMM'),
-                    moment().subtract(4, "month").startOf("month").format('MMMM'),
-                    moment().subtract(3, "month").startOf("month").format('MMMM'),
-                    moment().subtract(2, "month").startOf("month").format('MMMM'),
-                    moment().subtract(1, "month").startOf("month").format('MMMM'),
-                    moment().startOf("month").format('MMMM')],
+            labels: {!! json_encode($labels) !!},
             datasets: datasets
         };
 
-        var mix = document.getElementById("closedTrainingRequests").getContext('2d');
+        var mix = closedTrainingRequestsElement.getContext('2d');
         var closedTrainingRequests = new Chart(mix, {
             type: 'bar',
             data: barChartData,
             options: {
                 responsive: true,
+                plugins: {
+                    legend: {
+                        labels: {
+                            generateLabels: generateLegendLabelsWithTotal
+                        }
+                    }
+                },
                 scales: {
                     x: {
                         stacked: true,
@@ -441,41 +506,100 @@
 
     document.addEventListener("DOMContentLoaded", function () {
 
-        // Pass/fail rate for requests last 6 months
-        var passFailRequestsData = {!! json_encode($passFailRequests) !!}
+        // Passed exams for requests grouped by rating
+        var trainingPassedExamsElement = document.getElementById("trainingPassedExams");
+        if (!trainingPassedExamsElement) return;
+
+        var passedExamRequestsData = {!! json_encode($passedExamRequests) !!}
+        var passedExamDatasets = [];
+        for (const rating in passedExamRequestsData) {
+            passedExamDatasets.push({
+                label: rating,
+                data: passedExamRequestsData[rating]
+            })
+        }
 
         var barChartData = {
-            labels: [moment().subtract(6, "month").startOf("month").format('MMMM'),
-                    moment().subtract(5, "month").startOf("month").format('MMMM'),
-                    moment().subtract(4, "month").startOf("month").format('MMMM'),
-                    moment().subtract(3, "month").startOf("month").format('MMMM'),
-                    moment().subtract(2, "month").startOf("month").format('MMMM'),
-                    moment().subtract(1, "month").startOf("month").format('MMMM'),
-                    moment().startOf("month").format('MMMM')],
-            datasets: [{
-                label: 'Failed',
-                backgroundColor: 'rgb(200, 100, 100)',
-                data: passFailRequestsData["FAILED"]
-            }, {
-                label: 'Passed',
-                backgroundColor: 'rgb(100, 200, 100)',
-                data: passFailRequestsData["PASSED"]
-            }]
+            labels: {!! json_encode($labels) !!},
+            datasets: passedExamDatasets
 
         };
 
-        var mix = document.getElementById("TrainingPassFailRate").getContext('2d');
-        var passFailTrainings = new Chart(mix, {
+        var mix = trainingPassedExamsElement.getContext('2d');
+        var passedExamsTrainings = new Chart(mix, {
             type: 'bar',
             data: barChartData,
             options: {
                 responsive: true,
+                plugins: {
+                    legend: {
+                        labels: {
+                            generateLabels: generateLegendLabelsWithTotal
+                        }
+                    }
+                },
                 scales: {
                     x: {
                         stacked: true,
                         title: {
                             display: true,
-                            text: 'Note: This graph only shows standard and fast-tracked CPTs excluding S1'
+                            text: 'Note: This graph includes standard, fast-tracked, and endorsement CPTs excluding S1'
+                        }
+                    },
+                    y: {
+                        stacked: true,
+                        ticks: {
+                            stepSize: 1
+                        }
+                    }
+                }
+            }
+        });
+    });
+</script>
+
+<script>
+
+    document.addEventListener("DOMContentLoaded", function () {
+
+        // Failed exams for requests grouped by rating
+        var trainingFailedExamsElement = document.getElementById("trainingFailedExams");
+        if (!trainingFailedExamsElement) return;
+
+        var failedExamRequestsData = {!! json_encode($failedExamRequests) !!}
+        var failedExamDatasets = [];
+        for (const rating in failedExamRequestsData) {
+            failedExamDatasets.push({
+                label: rating,
+                data: failedExamRequestsData[rating]
+            })
+        }
+
+        var barChartData = {
+            labels: {!! json_encode($labels) !!},
+            datasets: failedExamDatasets
+
+        };
+
+        var mix = trainingFailedExamsElement.getContext('2d');
+        var failedExamsTrainings = new Chart(mix, {
+            type: 'bar',
+            data: barChartData,
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: {
+                        labels: {
+                            generateLabels: generateLegendLabelsWithTotal
+                        }
+                    }
+                },
+                scales: {
+                    x: {
+                        stacked: true,
+                        title: {
+                            display: true,
+                            text: 'Note: This graph includes standard, fast-tracked, and endorsement CPTs excluding S1'
                         }
                     },
                     y: {

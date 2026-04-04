@@ -17,6 +17,8 @@ use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
 
+const TEST_USER_TRAINING_AREA = 1;
+
 class BookingTest extends TestCase
 {
     use RefreshDatabase, WithFaker;
@@ -66,7 +68,7 @@ class BookingTest extends TestCase
 
         $controller->atcActivity()->create([
             'user_id' => $controller->id,
-            'area_id' => 1,
+            'area_id' => TEST_USER_TRAINING_AREA,
             'hours' => 100,
             'atc_active' => true,
         ]);
@@ -127,7 +129,7 @@ class BookingTest extends TestCase
                 function ($user) {
                     Training::factory()
                         ->has(Rating::factory(['vatsim_rating' => VatsimRating::S2]))
-                        ->create(['user_id' => $user->id, 'type' => 1, 'status' => 2]);
+                        ->create(['user_id' => $user->id, 'type' => 1, 'status' => 2, 'area_id' => TEST_USER_TRAINING_AREA]);
                 },
             ],
             'S2 Rating' => [
@@ -139,7 +141,7 @@ class BookingTest extends TestCase
                 function ($user) {
                     Training::factory()
                         ->has(Rating::factory(['vatsim_rating' => VatsimRating::S3]))
-                        ->create(['user_id' => $user->id, 'type' => 1, 'status' => 2]);
+                        ->create(['user_id' => $user->id, 'type' => 1, 'status' => 2, 'area_id' => TEST_USER_TRAINING_AREA]);
                 },
             ],
             'S3 Rating' => [
@@ -151,7 +153,7 @@ class BookingTest extends TestCase
                 function ($user) {
                     Training::factory()
                         ->has(Rating::factory(['vatsim_rating' => VatsimRating::C1]))
-                        ->create(['user_id' => $user->id, 'type' => 1, 'status' => 2]);
+                        ->create(['user_id' => $user->id, 'type' => 1, 'status' => 2, 'area_id' => TEST_USER_TRAINING_AREA]);
                 },
             ],
             'C1 Rating' => [
@@ -227,5 +229,56 @@ class BookingTest extends TestCase
 
         $this->actingAs($user)->followingRedirects()->postJson(route('booking.store', ['id' => $booking->id]), $booking->getAttributes())
             ->assertStatus(403);
+    }
+
+    #[Test]
+    public function visiting_users_on_familiarisation_training_can_specify_training_booking_tag(): void
+    {
+        $visitor = User::factory()->create([
+            'rating' => VatsimRating::S3->value,
+            // Assign a different division/subdivision so isMember() returns false initially
+            'division' => 'EUD',
+            'subdivision' => 'EUD',
+        ]);
+
+        $training = Training::factory()
+            ->has(Rating::factory(['vatsim_rating' => VatsimRating::S3]))
+            ->create([
+                'user_id' => $visitor->id,
+                'type' => 5, // Familiarisation
+                'status' => 1,
+                'area_id' => TEST_USER_TRAINING_AREA,
+            ]);
+
+        $startDate = Carbon::tomorrow()->addHours(2);
+        $endDate = $startDate->copy()->addHours(2);
+
+        $position = Position::factory()->create([
+            'rating' => VatsimRating::S2->value,
+            'callsign' => 'TEST_TWR',
+            'name' => 'Test Tower',
+        ]);
+
+        $bookingRequest = [
+            'date' => $startDate->format('d/m/Y'),
+            'start_at' => $startDate->format('H:i'),
+            'end_at' => $endDate->format('H:i'),
+            'position' => $position->callsign,
+            'tag' => 1, // Training tag
+        ];
+
+        $response = $this->actingAs($visitor)->post(
+            route('booking.store'),
+            $bookingRequest
+        );
+
+        $response->assertSessionHasNoErrors();
+        $response->assertRedirect(); // Or whatever it redirects to
+
+        $booking = Booking::latest()->first();
+        $this->assertNotNull($booking);
+        $this->assertEquals('TEST_TWR', $booking->callsign);
+        $this->assertEquals(1, $booking->training);
+        $this->assertEquals($visitor->id, $booking->user_id);
     }
 }

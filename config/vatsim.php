@@ -41,4 +41,22 @@ return [
     'division_api_url' => env('VATSIM_DIVISION_API_URL'),
     'division_api_token' => env('VATSIM_DIVISION_API_TOKEN'),
     'statsim_api_token' => env('STATSIM_API_KEY'),
+
+    /*
+    |--------------------------------------------------------------------------
+    | StatSim Statistics API Integration
+    |--------------------------------------------------------------------------
+    |
+    | This is the configuration for the StatSim statistics API integration.
+    | This is used to fetch ATC session data for activity charts.
+    |--------------------------------------------------------------------------
+    |
+    */
+
+    'statsim_api_url' => env('STATSIM_API_URL', 'https://api.statsim.net/'),
+    'statsim_api_key' => env('STATSIM_API_KEY', null),
+    'statsim_cache_ttl_minutes' => env('STATSIM_CACHE_TTL_MINUTES', 30),
+    'recent_sessions_days' => env('STATSIM_RECENT_SESSIONS_DAYS', 30),
+    'recent_sessions_limit' => env('STATSIM_RECENT_SESSIONS_LIMIT', 10),
+
 ];

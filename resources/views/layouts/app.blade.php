@@ -1,6 +1,6 @@
 
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-user-theme="{{ Auth::check() ? Auth::user()->setting_theme ?? 'system' : 'system' }}">
     <head>
         @include('layouts.header')
     </head>
@@ -25,12 +25,12 @@
             @endauth
 
             @yield('content-master') {{-- For special things to be done outside the container --}}
-            
+
             <div class="container-fluid">
 
                 @if(!Route::is('front'))
 
-                    <div class="page-title d-flex justify-content-between">
+                    <div class="page-title d-flex justify-content-between mb-2">
                         <h3 class="text-gray-800">
                             @yield('title', 'Page Title')
                         </h3>
@@ -73,8 +73,8 @@
     {{-- JavaScripts--}}
     @vite(['resources/js/app.js'])
     @include('scripts.global')
-    
+
     @yield('js')
-    
+
     </body>
 </html>

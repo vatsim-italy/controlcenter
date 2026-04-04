@@ -36,7 +36,7 @@ class DashboardController extends Controller
     {
         $user = Auth::user();
 
-        $report = TrainingReport::whereIn('training_id', $user->trainings->pluck('id'))->orderBy('created_at')->get()->last();
+        $report = TrainingReport::whereIn('training_id', $user->trainings->pluck('id'))->latest()->first();
 
         $subdivision = $user->subdivision;
         if (empty($subdivision)) {
@@ -56,7 +56,7 @@ class DashboardController extends Controller
         $types = TrainingController::$types;
         $queues = $this->getQueueStats(false);
 
-        $dueInterestRequest = TrainingInterest::whereIn('training_id', $user->trainings->pluck('id'))->where('expired', false)->get()->first();
+        $dueInterestRequest = TrainingInterest::whereIn('training_id', $user->trainings->pluck('id'))->where('expired', false)->first();
 
         // If the user belongs to our subdivision, doesn't have any training requests, has S2+ rating and is marked as inactive -> show notice
         $allowedSubDivisions = explode(',', Setting::get('trainingSubDivisions'));
@@ -102,7 +102,7 @@ class DashboardController extends Controller
      */
     public function endorsements()
     {
-        $members = User::has('ratings')->get()->sortBy('name');
+        $members = User::has('ratings')->orderBy('first_name')->orderBy('last_name')->get();
 
         return view('endorsements', compact('members'));
     }

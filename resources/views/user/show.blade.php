@@ -580,98 +580,111 @@
     <!-- Activity chart -->
     <script>
         document.addEventListener("DOMContentLoaded", function () {
+            const chartElement = document.getElementById('activityChart');
+            if (!chartElement) return;
 
-            // Fetch activity data
-            fetch("{{ route('statsim', $user->id) }}?from={{ now()->subMonths(11)->toDateString() }}+00%3A00&to={{ now()->toDateString() }}+22%3A00")
-                .then(response => response.json())
-                .then(data => {
-                    if (data && data.length > 0) {
-                        // 1. Prepare last 12 months of labels (remains the same)
-                        let months = [];
-                        for (let i = 11; i >= 0; i--) {
-                            months.push(
-                                new Date(new Date().setMonth(new Date().getMonth() - i))
-                                    .toLocaleString('default', {month: 'short'})
-                            );
-                        }
+            const fromDate = new Date();
+            fromDate.setMonth(fromDate.getMonth() - 11);
+            fromDate.setHours(0, 0, 0, 0);
 
-                        let activityLIXX = {};
-                        let activityOutside = {};
-                        months.forEach(m => {
-                            activityLIXX[m] = 0;
-                            activityOutside[m] = 0;
-                        });
+            const toDate = new Date();
+            toDate.setHours(23, 59, 59, 999);
 
-                        // 2. Process each connection using NEW property names
-                        data.forEach(conn => {
-                            // Parse ISO strings directly into Date objects
-                            const logon = new Date(conn.loggedOn);
-                            const logoff = new Date(conn.loggedOff);
+            const apiUrl = "{{ route('user.statistics.sessions', $user) }}?from="
+                + encodeURIComponent(fromDate.toISOString())
+                + "&to="
+                + encodeURIComponent(toDate.toISOString());
 
-                            // Calculate hours: (diff in ms) / ms / sec / min
-                            const hours = (logoff - logon) / 1000 / 60 / 60;
-
-                            // Determine month label and callsign prefix
-                            let month = logon.toLocaleString('default', {month: 'short'});
-                            let prefix2 = conn.callsign.slice(0, 2).toUpperCase();
-
-                            // 3. Increment counters
-                            // Only increment if the month exists in our chart labels
-                            if (activityLIXX.hasOwnProperty(month)) {
-                                if (prefix2 === "LI" || prefix2 === "LM" || conn.callsign.startsWith("LSZA")) {
-                                    activityLIXX[month] += hours;
-                                } else {
-                                    activityOutside[month] += hours;
-                                }
-                            }
-                        });
-
-                        // 4. Create the chart (rest of your Chart.js config remains the same)
-                        var chart = new Chart(
-                            document.getElementById('activityChart'),
-                            {
-                                type: 'bar',
-                                data: {
-                                    labels: months, // Use the generated month labels directly
-                                    datasets: [
-                                        {
-                                            label: 'LIXX',
-                                            data: months.map(m => activityLIXX[m]),
-                                            backgroundColor: 'rgba(54, 162, 235, 0.2)',
-                                            borderColor: 'rgb(54, 162, 235)',
-                                            borderWidth: 1
-                                        },
-                                        {
-                                            label: 'Outside',
-                                            data: months.map(m => activityOutside[m]),
-                                            backgroundColor: 'rgba(255, 99, 132, 0.5)',
-                                            borderColor: 'rgb(255, 99, 132)',
-                                            borderWidth: 1
-                                        }
-                                    ]
-                                },
-                                options: {
-                                    responsive: true,
-                                    scales: {
-                                        x: {stacked: true},
-                                        y: {
-                                            stacked: true,
-                                            title: {display: true, text: 'Hours'}
-                                        }
-                                    }
-                                }
-                            }
-                        );
-
-                    } else {
-                        document.getElementById('activityChart').parentElement.innerHTML = '<p class="mb-0">No data available</p>';
+            fetch(apiUrl)
+                .then(response => {
+                    if (!response.ok) {
+                        return response.json()
+                            .then(data => {
+                                throw new Error(data.error || `HTTP ${response.status}`);
+                            })
+                            .catch(() => Promise.reject(new Error(`HTTP ${response.status}`)));
                     }
+                    return response.json();
+                })
+                .then(data => {
+                    if (data.error) {
+                        throw new Error(data.error);
+                    }
+
+                    if (!Array.isArray(data) || data.length === 0) {
+                        chartElement.parentElement.innerHTML = '<p class="mb-0">No ATC activity data available</p>';
+                        return;
+                    }
+
+                    // Prepare last 12 months labels
+                    const now = new Date();
+                    const activityLIXX = {};
+                    const activityOutside = {};
+
+                    for (let i = 11; i >= 0; i--) {
+                        const monthDate = new Date(now.getFullYear(), now.getMonth() - i, 1);
+                        const monthKey = monthDate.toLocaleString('default', { month: 'short', year: 'numeric' });
+                        activityLIXX[monthKey] = 0;
+                        activityOutside[monthKey] = 0;
+                    }
+
+                    // Process sessions
+                    data.forEach(conn => {
+                        const logon = new Date(conn.logontime * 1000);
+                        const logoff = new Date(conn.logofftime * 1000);
+                        const hours = (logoff - logon) / 3_600_000;
+
+                        const month = logon.toLocaleString('default', { month: 'short', year: 'numeric' });
+                        const prefix2 = conn.callsign.slice(0, 2).toUpperCase();
+
+                        if (activityLIXX.hasOwnProperty(month)) {
+                            if (prefix2 === "LI" || prefix2 === "LM" || conn.callsign.startsWith("LSZA")) {
+                                activityLIXX[month] += hours;
+                            } else {
+                                activityOutside[month] += hours;
+                            }
+                        }
+                    });
+
+                    const months = Object.keys(activityLIXX);
+
+                    new Chart(chartElement, {
+                        type: 'bar',
+                        data: {
+                            labels: months,
+                            datasets: [
+                                {
+                                    label: 'LIXX',
+                                    data: months.map(m => activityLIXX[m]),
+                                    backgroundColor: 'rgba(54, 162, 235, 0.2)',
+                                    borderColor: 'rgb(54, 162, 235)',
+                                    borderWidth: 1
+                                },
+                                {
+                                    label: 'Outside',
+                                    data: months.map(m => activityOutside[m]),
+                                    backgroundColor: 'rgba(255, 99, 132, 0.5)',
+                                    borderColor: 'rgb(255, 99, 132)',
+                                    borderWidth: 1
+                                }
+                            ]
+                        },
+                        options: {
+                            responsive: true,
+                            scales: {
+                                x: { stacked: true },
+                                y: {
+                                    stacked: true,
+                                    title: { display: true, text: 'Hours' }
+                                }
+                            }
+                        }
+                    });
                 })
                 .catch(error => {
-                    console.error(error);
-                    alert('An error occurred while fetching STATSIM hours data.');
+                    console.error('Statistics API error:', error);
+                    chartElement.parentElement.innerHTML = '<p class="mb-0 text-danger">Failed to load activity data</p>';
                 });
         });
     </script>
-
 @endsection

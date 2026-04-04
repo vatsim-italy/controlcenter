@@ -280,6 +280,29 @@ class UserController extends Controller
     }
 
     /**
+     * AJAX: Return ATC sessions from statistics API for user
+     */
+    public function fetchStatisticsSessions(StatisticsSessionsRequest $request, User $user, StatisticsService $service): \Illuminate\Http\JsonResponse
+    {
+        try {
+            $sessions = $service->getCachedAtcSessions(
+                $user->id,
+                $request->date('from'),
+                $request->date('to')
+            );
+
+            $transformed = $service->transformSessions($sessions);
+
+            return response()->json($transformed);
+        } catch (StatisticsApiException $e) {
+            return response()->json([
+                'error' => $e->getMessage(),
+                'status' => $e->getHttpStatus() ?: 500,
+            ], $e->getHttpStatus() ?: 500);
+        }
+    }
+
+    /**
      * Update the specified resource in storage.
      *
      * @return \Illuminate\Http\Response

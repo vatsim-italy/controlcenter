@@ -668,7 +668,7 @@
                             // 3. Increment counters
                             // Only increment if the month exists in our chart labels
                             if (activityLIXX.hasOwnProperty(month)) {
-                                if (prefix2 === "LI" || prefix2 === "LM") {
+                                if (prefix2 === "LI" || prefix2 === "LM" || conn.callsign.startsWith("LSZA")) {
                                     activityLIXX[month] += hours;
                                 } else {
                                     activityOutside[month] += hours;

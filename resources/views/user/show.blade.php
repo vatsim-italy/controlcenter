@@ -23,9 +23,9 @@
                     <dd>
                         {{ $user->id }}
                         <button type="button" onclick="navigator.clipboard.writeText('{{ $user->id }}')"><i class="fas fa-copy"></i></button>
-                        <a href="https://stats.vatsim.net/stats/{{ $user->id }}" target="_blank" title="VATSIM Stats" class="link-btn me-1"><i class="fas fa-chart-simple"></i></button></a>
+                        <a href="https://stats.vatsim.net/stats/{{ $user->id }}" target="_blank" title="VATSIM Stats" class="link-btn me-1"><i class="fas fa-chart-simple"></i></a>
                         @if($user->division == 'EUD' && Auth::user()->isModeratorOrAbove())
-                            <a href="https://core.vateud.net/manage/controller/{{ $user->id }}/view" target="_blank" title="VATEUD Core Profile" class="link-btn"><i class="fa-solid fa-earth-europe"></i></button></a>
+                            <a href="https://core.vateud.net/manage/controller/{{ $user->id }}/view" target="_blank" title="VATEUD Core Profile" class="link-btn"><i class="fa-solid fa-earth-europe"></i></a>
                         @endif
                     </dd>
 
@@ -119,7 +119,7 @@
                 @else
                     <div class="table-responsive">
                         <table class="table table-sm table-leftpadded mb-0" width="100%" cellspacing="0">
-                            <thead class="table-light">
+                            <thead>
                                 <tr>
                                     <th data-sortable="true" data-filter-control="select">Teaches</th>
                                     <th data-sortable="true" data-filter-control="input">Expires</th>
@@ -147,7 +147,6 @@
                 </h6>
             </div>
             <div class="card-body {{ $recentAtcSessions->count() == 0 ? '' : 'p-0' }}">
-
                 @if($recentAtcSessions->count() == 0)
                     <p class="mb-0">No recent ATC sessions</p>
                 @else
@@ -164,7 +163,13 @@
                                 @foreach($recentAtcSessions as $session)
                                 <tr>
                                     <td>{{ $session['callsign'] }}</td>
-                                    <td>{{ ($session['callsign'] ?? '') !== '' ? $session['callsign'] : '—' }}</td>
+                                    <td>
+                                        @if(!empty($session['start']))
+                                            {{ \Carbon\Carbon::parse($session['start'])->format('d M Y') }}
+                                        @else
+                                            —
+                                        @endif
+                                    </td>
                                     <td>{{ $session['duration'] ?? '—' }}</td>
                                 </tr>
                                 @endforeach
@@ -471,6 +476,74 @@
                 </div>
             </div>
         </div>
+        @if(Auth::user()->isAdmin() || Auth::user()->id == $user->id)
+            <div class="col-xl-12 col-lg-12 col-md-12 p-0">
+                <div class="card shadow mb-4">
+                    <div class="card-header bg-primary py-3 d-flex flex-row align-items-center justify-content-between">
+                        <h6 class="m-0 fw-bold text-white">
+                            <i class="fas fa-comment-dots me-2"></i>Feedbacks
+                        </h6>
+                        @can('create', \App\Models\Feedback::class)
+                            <a href="{{ route('feedback.create', $user->id) }}" class="btn btn-sm btn-light">
+                                <i class="fas fa-plus me-1"></i> Add New
+                            </a>
+                        @endcan
+                    </div>
+
+                    <div class="card-body p-0">
+                        @if(count($userFeedbacks) == 0)
+                            <div class="text-center py-5">
+                                <i class="fas fa-comment-slash fa-2x text-muted mb-3"></i>
+                                <p class="text-muted mb-0">No feedbacks received yet</p>
+                            </div>
+                        @else
+                            <div class="table-responsive">
+                                <table class="table table-hover table-striped mb-0"
+                                       data-toggle="table"
+                                       data-pagination="true"
+                                       data-page-size="10"
+                                       data-filter-control="true"
+                                       data-sort-reset="true">
+                                    <thead class="table-light">
+                                    <tr>
+                                        <th data-field="received" data-sortable="true" class="w-15">Date</th>
+                                        <th data-field="position" data-sortable="true" data-filter-control="select" class="w-15">Position</th>
+                                        <th data-field="feedback" data-sortable="false" data-filter-control="input">Feedback</th>
+                                    </tr>
+                                    </thead>
+                                    <tbody>
+                                    @foreach($userFeedbacks as $f)
+                                        <tr class="{{ $f->visibility ? '' : 'bg-gray' }}">
+                                            <td>
+                                        <span class="badge bg-light text-dark">
+                                             @unless($f->visibility)
+                                                <i class="fas fa-fw fa-eye-slash"></i>
+                                            @endunless
+                                            {{ $f->created_at->toEuropeanDate() }}
+                                        </span>
+                                            </td>
+                                            <td>
+                                                @isset($f->referencePosition)
+                                                    <span class="badge bg-primary">
+                                                {{ $f->referencePosition->callsign }}
+                                            </span>
+                                                @else
+                                                    <span class="badge bg-secondary">N/A</span>
+                                                @endisset
+                                            </td>
+                                            <td class="text-truncate" style="max-width: 300px;" data-bs-toggle="tooltip" title="{{ $f->feedback }}">
+                                                {!! nl2br(e($f->feedback)) !!}
+                                            </td>
+                                        </tr>
+                                    @endforeach
+                                    </tbody>
+                                </table>
+                            </div>
+                        @endif
+                    </div>
+                    @endif
+                </div>
+            </div>
         @if (\Illuminate\Support\Facades\Gate::inspect('viewAccess', $user)->allowed())
             <div class="col-xl-12 col-lg-12 col-md-12 mb-12 p-0">
                 <div class="card shadow mb-4">

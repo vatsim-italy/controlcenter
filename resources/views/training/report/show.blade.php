@@ -103,11 +103,12 @@
                                                 @if(($results[$item->item_id]->vote ?? '') == 'I') #dc3545
                                                 @elseif(($results[$item->item_id]->vote ?? '') == 'S') #90ee90
                                                 @elseif(($results[$item->item_id]->vote ?? '') == 'G') #198754
-                                                @endif;
+                                                @endif !important;
                                                 color:
                                                 @if(($results[$item->item_id]->vote ?? '') == 'I' || ($results[$item->item_id]->vote ?? '') == 'G') #fff
                                                 @else #000
                                                 @endif;
+                                                background-image: none !important;
                                                 font-weight: bold;">
                                     </td>
                                     <td>

@@ -12,6 +12,7 @@ use App\Models\User;
 use App\Notifications\EndorsementCreatedNotification;
 use App\Notifications\EndorsementModifiedNotification;
 use App\Notifications\EndorsementRevokedNotification;
+use App\Services\DiscordNotifier;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -146,6 +147,17 @@ class EndorsementController extends Controller
             ' ― User: ' . $endorsement->user_id .
             ' ― Rating: ' . Rating::find($data['ratingFACILITY'])->name);
 
+            DiscordNotifier::send(
+                'Facility Endorsement Created',
+                "{$user->name} received a FACILITY endorsement",
+                'success',
+                [
+                    'User ID' => $user->id,
+                    'Rating' => Rating::find($data['ratingFACILITY'])->name,
+                    'Created by' => auth()->user()->name ?? 'System',
+                ]
+            );
+
             return redirect()->intended(route('user.show', $user->id))->withSuccess($user->name . "'s endorsement created");
         } elseif ($endorsementType == 'SOLO') {
             // Training endorsements Solo
@@ -218,6 +230,17 @@ class EndorsementController extends Controller
 
             $user->notify(new EndorsementCreatedNotification($endorsement));
 
+            DiscordNotifier::send(
+                'Solo Endorsement Created',
+                "{$user->name} received a SOLO endorsement",
+                'warning',
+                [
+                    'Position' => $data['position'],
+                    'Expires' => $expireDate?->format('d/m/Y') ?? 'N/A',
+                    'Training' => $user->getActiveTraining()?->id ?? 'N/A',
+                ]
+            );
+
             return redirect()->intended(route('user.show', $user->id))->withSuccess($user->name . '\'s solo endorsement successfully created. E-mail confirmation sent to the student.');
         } elseif ($endorsementType == 'EXAMINER') {
             // Examiner endorsement
@@ -253,6 +276,16 @@ class EndorsementController extends Controller
             ' ― Rating: ' . $data['ratingGRP'] .
             ' ― Areas: ' . implode(',', $data['areas']));
 
+            DiscordNotifier::send(
+                'Examiner Endorsement Created',
+                "{$user->name} is now an Examiner",
+                'danger',
+                [
+                    'Rating' => Rating::find($data['ratingGRP'])->name,
+                    'Areas' => implode(', ', $data['areas']),
+                ]
+            );
+
             return redirect()->intended(route('user.show', $user->id))->withSuccess($user->name . "'s examiner endorsement successfully created");
         } elseif ($endorsementType == 'VISITING') {
             // Visiting endorsement
@@ -279,6 +312,15 @@ class EndorsementController extends Controller
             ActivityLogController::warning('ENDORSEMENT', 'Created ' . $endorsementType . ' endorsement ' .
             ' ― User: ' . $endorsement->user_id .
             ' ― Areas: ' . implode(',', $data['areas']));
+
+            DiscordNotifier::send(
+                'Visiting Endorsement Created',
+                "{$user->name} received a Visiting endorsement",
+                'info',
+                [
+                    'Areas' => implode(', ', $data['areas']),
+                ]
+            );
 
             return redirect()->intended(route('user.show', $user->id))->withSuccess($user->name . "'s visiting endorsement successfully created");
         }
@@ -328,6 +370,14 @@ class EndorsementController extends Controller
         $endorsement->save();
 
         ActivityLogController::warning('ENDORSEMENT', 'Deleted ' . $user->name . '\'s ' . $endorsement->type . ' endorsement');
+        DiscordNotifier::send(
+            'Endorsement Deleted',
+            "Removed {$endorsement->type} to {$user->name}",
+            'info',
+            [
+                'by ' => \Auth::user()->name,
+            ]
+        );
         if ($endorsement->type == 'SOLO') {
             $endorsement->user->notify(new EndorsementRevokedNotification($endorsement));
 

@@ -14,6 +14,7 @@ use App\Models\TrainingExamination;
 use App\Models\User;
 use App\Notifications\MentorExaminationNotification;
 use App\Notifications\TrainingExamNotification;
+use App\Services\DiscordNotifier;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -145,6 +146,24 @@ class TrainingExaminationController extends Controller
             ]);
         }
 
+        $trainee = $training->user->name;
+        $examiner = auth()->user()->name ?? 'System';
+        $resultToCaps = strtoupper($data['result']);
+
+        DiscordNotifier::send(
+            'Training Examination Recorded',
+            "{$trainee} has {$resultToCaps} their training examination",
+            $resultToCaps === 'PASSED' ? 'success' : 'danger',
+            [
+                'Training ID' => $training->id,
+                'Trainee' => $trainee,
+                'Examiner' => $examiner,
+                'Position' => $position->callsign,
+                'Result' => $resultToCaps,
+                'Date' => $date->format('d/m/Y'),
+            ]
+        );
+
         return redirect(route('training.show', $training->id))->withSuccess('Examination successfully added');
     }
 
@@ -177,6 +196,15 @@ class TrainingExaminationController extends Controller
 
         $examination->delete();
         ActivityLogController::danger('TRAINING', 'Deleted training examination ' . $examination->id . ' ― From Training ' . $examination->training->id);
+        DiscordNotifier::send(
+            'Training Examination Deleted',
+            "Examination #{$examination->id} was deleted",
+            'danger',
+            [
+                'Training ID' => $examination->training->id,
+                'Deleted by' => auth()->user()->name ?? 'System',
+            ]
+        );
 
         if ($request->wantsJson()) {
             return response()->json(['message' => 'Examination successfully deleted']);

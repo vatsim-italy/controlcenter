@@ -11,6 +11,7 @@ use App\Models\Position;
 use App\Models\Training;
 use App\Models\TrainingReport;
 use App\Notifications\TrainingReportNotification;
+use App\Services\DiscordNotifier;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -194,6 +195,25 @@ class TrainingReportController extends Controller
 
             return redirect(route('user.reports', Auth::user()))->withSuccess('Report successfully created');
         }
+
+        $student = $training->user->name;
+        $examiner = auth()->user()->name ?? 'System';
+        $level = $training->ratings->last()->name;
+
+        DiscordNotifier::send(
+            'Training Report Submitted',
+            "{$examiner} submitted a training report for {$student}",
+            'info',
+            [
+                'Student' => $student,
+                'Examiner' => $examiner,
+                'Training ID' => $training->id,
+                'Position' => $data['position'],
+                'Rating Level' => $level,
+                'Session Start' => $data['startTime'],
+                'Session End' => $data['endTime'],
+            ]
+        );
 
         return redirect(route('training.show', $training->id))->withSuccess('Report successfully created');
     }

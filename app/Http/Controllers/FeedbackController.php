@@ -8,6 +8,7 @@ use App\Models\Position;
 use App\Models\User;
 use App\Notifications\FeedbackNotification;
 use App\Notifications\FeedbackNotificationUser;
+use App\Services\DiscordNotifier;
 use Illuminate\Http\Request;
 
 class FeedbackController extends Controller
@@ -74,8 +75,7 @@ class FeedbackController extends Controller
             'followup' => $followup,
         ]);
 
-
-        if($controller && $visible) {
+        if ($controller && $visible) {
             $controller->notify(new FeedbackNotificationUser($controller, $feedback));
         }
 
@@ -83,6 +83,17 @@ class FeedbackController extends Controller
         if (Setting::get('feedbackForwardEmail')) {
             $feedback->notify(new FeedbackNotification($feedback));
         }
+
+        $toContr = isset($controller) ? $controller->id : 'N/A';
+
+        DiscordNotifier::send(
+            'Feedback received',
+            "Controller: {$toContr}",
+            'info',
+            [
+                'Message' => $feedback->feedback,
+            ]
+        );
 
         return redirect()->route('dashboard')->with('success', 'Feedback submitted!');
 

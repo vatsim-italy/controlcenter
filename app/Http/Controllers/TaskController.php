@@ -12,6 +12,7 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\File;
 use Illuminate\View\View;
+use App\Services\DiscordNotifier;
 
 class TaskController extends Controller
 {
@@ -64,6 +65,16 @@ class TaskController extends Controller
             // Run the create method on the task type to trigger type specific actions on creation
             $task->type()->create($task);
 
+            $typeStr = class_basename($task->type);
+            DiscordNotifier::send(
+                'Task created',
+                "{$user->name} created a new task {$typeStr}",
+                'info',
+                [
+                    'Assignee' => $recipient->name,
+                ]
+            );
+
             return redirect()->back()->with('success', 'Task created successfully.');
         }
 
@@ -96,6 +107,11 @@ class TaskController extends Controller
         }
 
         self::close($task, TaskStatus::COMPLETED);
+        DiscordNotifier::send(
+            'Task completed',
+            sprintf('Completed task regarding %s from %s.', $task->subject->name, $task->creator->name),
+            'info'
+        );
 
         return redirect()->back()->with('success', sprintf('Completed task regarding %s from %s.', $task->subject->name, $task->creator->name));
     }
@@ -114,6 +130,12 @@ class TaskController extends Controller
         }
 
         self::close($task, TaskStatus::DECLINED);
+
+        DiscordNotifier::send(
+            'Task declined',
+            sprintf('Declined task regarding %s from %s.', $task->subject->name, $task->creator->name),
+            'info'
+        );
 
         return redirect()->back()->with('success', sprintf('Declined task regarding %s from %s.', $task->subject->name, $task->creator->name));
     }

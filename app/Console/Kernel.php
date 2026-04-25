@@ -37,6 +37,9 @@ class Kernel extends ConsoleKernel
         $schedule->command('check:controllers')
             ->everyTenMinutes();
 
+        $schedule->command('bookings:fetch-vatsim')
+            ->everyTenMinutes();
+
         // Delete old Sweatbox bookings
         $schedule->command('clean:sweatbooks')
             ->daily();

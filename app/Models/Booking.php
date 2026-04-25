@@ -14,7 +14,7 @@ class Booking extends Model
      *
      * @var array
      */
-    protected $fillable = ['callsign', 'position_id', 'name', 'time_start', 'time_end', 'cid', 'user_id', 'training', 'event', 'exam'];
+    protected $fillable = ['vatsim_booking', 'callsign', 'position_id', 'name', 'time_start', 'time_end', 'cid', 'user_id', 'training', 'event', 'exam'];
 
     public function position()
     {

@@ -102,18 +102,16 @@
                         @endif
                         {{ isset($training->paused_at) ? ' (PAUSED)' : '' }}
                     </dd>
-                    @can('update', $training)
-                        @if($meetsRequirement?->requirement_met === false && $training->ratings->first()->name != "S1")
-                            <dd class="d-flex align-items-center">
-                                <span class="badge rounded-pill bg-light text-dark border me-2">
-                                    <i class="fa fa-triangle-exclamation text-warning"></i>
-                                </span>
-                                <div>
-                                    <strong class="text-danger">Requirement Not Met</strong>
-                                </div>
-                            </dd>
-                        @endif
-                    @endcan
+                    @if($meetsRequirement?->requirement_met === false && $training->ratings->first()->name != "S1")
+                        <dd class="d-flex align-items-center">
+                            <span class="badge rounded-pill bg-light text-dark border me-2">
+                                <i class="fa fa-triangle-exclamation text-warning"></i>
+                            </span>
+                            <div>
+                                <strong class="text-danger">Requirement Not Met</strong>
+                            </div>
+                        </dd>
+                    @endif
                     <dt>Type</dt>
                     <dd><i class="{{ $types[$training->type]["icon"] }} text-primary"></i>&ensp;{{ $types[$training->type]["text"] }}</dd>
 

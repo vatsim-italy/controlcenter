@@ -202,6 +202,8 @@ Route::middleware(['auth', 'activity', 'suspended'])->group(function () {
     Route::controller(FeedbackController::class)->group(function () {
         Route::get('/feedback', 'create')->name('feedback');
         Route::post('/feedback/store', 'store')->name('feedback.store');
+        Route::post('/feedback/reply', 'reply')->name('feedback.reply');
+        Route::get('/feedback/{feedback}/preview', 'previewFragment')->name('feedback.preview');
     });
 
     Route::controller(TaskController::class)->group(function () {

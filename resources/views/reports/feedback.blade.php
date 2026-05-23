@@ -36,6 +36,7 @@
                                 <th data-field="position" data-sortable="true" data-filter-control="select">Position</th>
                                 <th data-field="feedback" data-sortable="false" data-filter-control="input">Feedback</th>
                                 <th data-field="followup" data-sortable="false" data-filter-control="input" class="text-center">Follow Up</th>
+                                <th data-field="actions" data-sortable="false" class="text-center">Actions</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -61,11 +62,22 @@
                                         {!! nl2br($f->feedback) !!}
                                     </td>
                                     <td class="text-center">
-                                        @if($f->followup == 1)
+                                        @if($f->followup)
                                             <i class="fas fa-check text-success"></i>
                                         @else
                                             <i class="fas fa-times text-muted"></i>
                                         @endif
+                                    </td>
+                                    <td class="text-center">
+                                        @can('viewFeedback', \App\Models\ManagementReport::class)
+                                            @if(! $f->reply_sent)
+                                                <button type="button" class="btn btn-sm btn-success open-positive-feedback" data-feedback-id="{{ $f->id }}" title="Preview & send positive feedback">
+                                                    <i class="fas fa-paper-plane"></i>
+                                                </button>
+                                            @else
+                                                <span class="text-success" title="Positive reply sent"><i class="fas fa-check-circle"></i></span>
+                                            @endif
+                                        @endcan
                                     </td>
                                 </tr>
                             @endforeach
@@ -77,5 +89,61 @@
     </div>
 
 </div>
+        <!-- Modal for previewing positive feedback -->
+        <div class="modal fade" id="positiveFeedbackModal" tabindex="-1" aria-hidden="true">
+            <div class="modal-dialog modal-lg modal-dialog-centered">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">Preview positive feedback</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body" id="positiveFeedbackModalBody">
+                        <div class="text-center py-5">Loading preview…</div>
+                    </div>
+                    <div class="modal-footer">
+                        <form id="positiveFeedbackModalForm" method="POST" action="{{ route('feedback.reply') }}">
+                            @csrf
+                            <input type="hidden" name="feedback" id="positiveFeedbackModalInput" value="">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                            <button type="submit" class="btn btn-success">Send reply</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+@section('js')
+<script>
+document.addEventListener('DOMContentLoaded', function(){
+        var modalEl = document.getElementById('positiveFeedbackModal');
+        var bsModal = new window.bootstrap.Modal(modalEl);
+
+        var previewUrlTemplate = "{{ route('feedback.preview', ['feedback' => '__ID__']) }}";
+
+        document.addEventListener('click', function(e){
+                var btn = e.target.closest('.open-positive-feedback');
+                if(!btn) return;
+                e.preventDefault();
+
+                var id = btn.getAttribute('data-feedback-id');
+                var url = previewUrlTemplate.replace('__ID__', encodeURIComponent(id));
+
+                // show loader
+                document.getElementById('positiveFeedbackModalBody').innerHTML = '<div class="text-center py-5">Loading preview…</div>';
+                document.getElementById('positiveFeedbackModalInput').value = id;
+                bsModal.show();
+
+                fetch(url, { headers: { 'X-Requested-With': 'XMLHttpRequest' }})
+                        .then(function(res){ if(!res.ok) throw res; return res.json(); })
+                        .then(function(data){
+                                document.getElementById('positiveFeedbackModalBody').innerHTML = data.html || '<div class="text-danger">Preview failed</div>';
+                        })
+                        .catch(function(){
+                                document.getElementById('positiveFeedbackModalBody').innerHTML = '<div class="text-danger">Preview failed</div>';
+                        });
+        });
+});
+</script>
+@endsection
 
 @endsection

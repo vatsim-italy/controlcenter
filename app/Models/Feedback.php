@@ -12,6 +12,10 @@ class Feedback extends Model
     use Notifiable;
 
     protected $guarded = [];
+    protected $casts = [
+        'reply_sent' => 'boolean',
+        'replied_at' => 'datetime',
+    ];
 
     public function submitter()
     {

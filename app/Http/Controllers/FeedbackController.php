@@ -8,6 +8,7 @@ use App\Models\Position;
 use App\Models\User;
 use App\Notifications\FeedbackNotification;
 use App\Notifications\FeedbackNotificationUser;
+use App\Notifications\PositiveFeedbackNotification;
 use App\Services\DiscordNotifier;
 use Illuminate\Http\Request;
 
@@ -97,5 +98,58 @@ class FeedbackController extends Controller
 
         return redirect()->route('dashboard')->with('success', 'Feedback submitted!');
 
+    }
+
+    public function reply(Request $request) {
+        if (! Setting::get('feedbackEnabled')) {
+            return redirect()->route('dashboard')->withErrors('Feedback is currently disabled.');
+        }
+
+        $this->authorize('viewFeedback', \App\Models\ManagementReport::class);
+
+        $data = $request->validate([
+            'feedback' => 'required|exists:feedback,id',
+        ]);
+
+        $sender = auth()->user();
+        $feedback = Feedback::find($data['feedback']);
+
+        if (! $feedback) {
+            return redirect()->back()->withErrors('Feedback not found.');
+        }
+
+        if( $feedback->reply_sent ) {
+            return redirect()->back()->withErrors('Reply has already been sent for this entry.');
+        }
+
+        $feedback->notify(new PositiveFeedbackNotification($sender, $feedback));
+
+        $feedback->reply_sent = true;
+        $feedback->replied_at = now();
+        $feedback->save();
+
+        return redirect()->back()->with('success', 'Sent and marked.');
+
+    }
+
+    /**
+     * Return rendered positive feedback HTML fragment for modal preview.
+     */
+    public function previewFragment(\App\Models\Feedback $feedback)
+    {
+        $this->authorize('viewFeedback', \App\Models\ManagementReport::class);
+
+        $recipient = $feedback->submitter;
+        $sender = auth()->user();
+
+        $html = app(\Illuminate\Mail\Markdown::class)->render(
+            'mail.positive_feedback',
+            [
+                'firstName' => $recipient->first_name,
+                'sender' => $sender->first_name,
+            ]
+        )->toHtml();
+
+        return response()->json(['html' => $html]);
     }
 }

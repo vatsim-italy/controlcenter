@@ -10,6 +10,9 @@ use App\Notifications\FeedbackNotification;
 use App\Notifications\FeedbackNotificationUser;
 use App\Notifications\PositiveFeedbackNotification;
 use App\Services\DiscordNotifier;
+use Illuminate\Contracts\View\View;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 
 class FeedbackController extends Controller
@@ -19,7 +22,7 @@ class FeedbackController extends Controller
      *
      * @return \Illuminate\Http\Response
      */
-    public function create()
+    public function create(): View|RedirectResponse
     {
 
         if (! Setting::get('feedbackEnabled')) {
@@ -27,7 +30,7 @@ class FeedbackController extends Controller
         }
 
         $positions = Position::all();
-        $controllers = User::all();
+        $controllers = User::getAssociatedActiveAtcMembers()->sortBy('name')->values();
 
         return view('feedback.create', compact('positions', 'controllers'));
     }
@@ -37,7 +40,7 @@ class FeedbackController extends Controller
      *
      * @return \Illuminate\Http\Response
      */
-    public function store(Request $request)
+    public function store(Request $request): RedirectResponse
     {
 
         if (! Setting::get('feedbackEnabled')) {
@@ -46,7 +49,7 @@ class FeedbackController extends Controller
 
         $data = $request->validate([
             'position' => 'nullable|exists:positions,callsign',
-            'controller' => 'nullable|exists:users,id',
+            'controller' => 'nullable|integer|exists:users,id',
             'feedback' => 'required',
             'visibilityToggle' => 'nullable',
             'emailToggle' => 'nullable',
@@ -100,7 +103,8 @@ class FeedbackController extends Controller
 
     }
 
-    public function reply(Request $request) {
+    public function reply(Request $request): RedirectResponse
+    {
         if (! Setting::get('feedbackEnabled')) {
             return redirect()->route('dashboard')->withErrors('Feedback is currently disabled.');
         }
@@ -135,7 +139,7 @@ class FeedbackController extends Controller
     /**
      * Return rendered positive feedback HTML fragment for modal preview.
      */
-    public function previewFragment(\App\Models\Feedback $feedback)
+    public function previewFragment(\App\Models\Feedback $feedback): JsonResponse
     {
         $this->authorize('viewFeedback', \App\Models\ManagementReport::class);
 

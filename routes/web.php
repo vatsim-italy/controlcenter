@@ -22,6 +22,7 @@ use App\Http\Controllers\TrainingObjectAttachmentController;
 use App\Http\Controllers\TrainingReportController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\VoteController;
+use App\Http\Controllers\FeedbackController;
 
 /*
 |--------------------------------------------------------------------------
@@ -38,6 +39,7 @@ use App\Http\Controllers\VoteController;
 // Main page
 // --------------------------------------------------------------------------
 Route::get('/', [FrontPageController::class, 'index'])->name('front');
+Route::view('/privacy', 'privacy')->name('privacy');
 
 // --------------------------------------------------------------------------
 // VATSIM Authentication

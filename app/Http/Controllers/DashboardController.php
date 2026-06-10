@@ -11,6 +11,7 @@ use App\Models\Vote;
 use App\Models\Area;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
+use App\Models\RatingEligibility;
 
 /**
  * Controller for the dashboard
@@ -82,7 +83,9 @@ class DashboardController extends Controller
 
         $oudatedVersionWarning = $user->isAdmin() && Setting::get('_updateAvailable');
 
-        return view('dashboard', compact('data', 'trainings', 'statuses', 'types', 'dueInterestRequest', 'atcInactiveMessage', 'completedTrainingMessage', 'activeVote', 'atcHours', 'workmailRenewal', 'studentTrainings', 'cronJobError', 'oudatedVersionWarning', 'queues'));
+        $eligibilities = RatingEligibility::where('user_id', $user->id)->with('rating')->get();
+
+        return view('dashboard', compact('data', 'trainings', 'statuses', 'types', 'dueInterestRequest', 'atcInactiveMessage', 'completedTrainingMessage', 'activeVote', 'atcHours', 'workmailRenewal', 'studentTrainings', 'cronJobError', 'oudatedVersionWarning', 'queues', 'eligibilities'));
     }
 
     /**

@@ -12,7 +12,9 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('atc_activities', function (Blueprint $table) {
-            $table->timestamp('last_online')->nullable();
+            if (!Schema::hasColumn('atc_activities', 'last_online')) {
+                $table->timestamp('last_online')->nullable();
+            }
             $table->double('hours_in_period')->default(0);
         });
     }

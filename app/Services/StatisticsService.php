@@ -79,7 +79,7 @@ class StatisticsService
      * Fetch ATC sessions with caching so multiple consumers
      * (charts, tables, etc.) reuse the same StatSim response.
      */
-    public function getCachedAtcSessions(string $vatsimId, \DateTimeInterface $from, \DateTimeInterface $to): array
+    public function getCachedAtcSessions(string $vatsimId, \DateTimeInterface $from, \DateTimeInterface $to, int $masterMonths = 12): array
     {
         $todayKey = now()->setTimezone('UTC')->toDateString();
         $cacheKey = sprintf('statsim:sessions:master:%s:%s', $vatsimId, $todayKey);
@@ -93,9 +93,9 @@ class StatisticsService
         $allSessions = Cache::remember(
             $cacheKey,
             now()->addMinutes($ttlMinutes),
-            function () use ($vatsimId) {
+            function () use ($vatsimId, $masterMonths) {
                 $masterTo = now()->endOfDay();
-                $masterFrom = now()->subMonths(12)->startOfDay();
+                $masterFrom = now()->subMonths($masterMonths)->startOfDay();
                 
                 return $this->getAtcSessions($vatsimId, $masterFrom, $masterTo);
             }

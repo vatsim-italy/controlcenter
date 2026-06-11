@@ -195,14 +195,15 @@ class UserController extends Controller
         // Fetch recent ATC sessions from StatSim via the StatisticsService.
         // Use the same general window as the activity chart (last 12 months)
         // and then narrow to a configurable \"recent\" period for the table.
-        $to = Carbon::now()->endOfDay();
-        $from = (clone $to)->subMonths(11)->startOfDay();
+        $to   = Carbon::now()->endOfDay();
+        $from = (clone $to)->subDays(30)->startOfDay();
 
         $recentAtcSessions = collect(
             $statisticsService->getRecentSessionsSummary(
                 (string) $user->id,
                 $from,
-                $to
+                $to,
+                1
             )
         );
 
@@ -288,7 +289,8 @@ class UserController extends Controller
             $sessions = $service->getCachedAtcSessions(
                 $user->id,
                 $request->date('from'),
-                $request->date('to')
+                $request->date('to'),
+                1
             );
 
             $transformed = $service->transformSessions($sessions);

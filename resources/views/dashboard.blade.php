@@ -106,8 +106,6 @@
         </div>
     </div>
 
-
-
     <!-- Last training card -->
     <div class="col-xl-3 col-md-6 mb-4 d-none d-xl-block d-lg-block d-md-block">
         <div class="card border-left-info shadow h-100 py-2">
@@ -132,8 +130,8 @@
 </div>
 
 <div class="row">
-    <!-- Area Chart -->
-    <div class="col-xl-8 col-lg-7 ">
+    <!-- Left column -->
+    <div class="col-xl-8 col-lg-7">
 
         @if(\Auth::user()->isMentor())
         <div class="card shadow mb-4 d-none d-xl-block d-lg-block d-md-block">
@@ -221,61 +219,53 @@
         @endif
 
         @if(!empty($eligibilities) && collect($eligibilities)->where('rating.endorsement_type', 'T1')->count())
-                <div class=" col-xl-6 col-lg-6 card shadow mb-4">
-                    <div class="card-header bg-primary py-3">
-                        <h6 class="m-0 fw-bold text-white">Tier 1 Eligibility</h6>
-                    </div>
-
-                    <div class="card-body p-0">
-                        <div class="table-responsive">
-                            <table class="table table-striped table-hover table-leftpadded mb-0">
-                                <thead class="table-light">
+        <div class="card shadow mb-4">
+            <div class="card-header bg-primary py-3">
+                <h6 class="m-0 fw-bold text-white">Tier 1 Eligibility</h6>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-striped table-hover table-leftpadded mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Endorsement</th>
+                                <th>Status</th>
+                                <th>Reason</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach($eligibilities as $eligibility)
+                                @if($eligibility['rating']['endorsement_type'] === 'T1' and $eligibility['reason'] !== "Endorsement already held")
                                     <tr>
-                                        <th>Endorsement</th>
-                                        <th>Status</th>
-                                        <th>Reason</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    @foreach($eligibilities as $eligibility)
-                                        @if($eligibility['rating']['endorsement_type'] === 'T1')
-                                            <tr>
-                                                <td>{{ $eligibility['rating']['name'] }}</td>
-                                                <td>
-                                                    @if($eligibility['eligible'] && $eligibility['reason'] === "Endorsement already held")
-                                                        <span class="badge bg-success">
-                                                            <i class="fas fa-check"></i> Held
-                                                        </span>
-                                                    @elseif($eligibility['eligible'])
-                                                        <span class="badge bg-success">
-                                                            <i class="fas fa-check"></i> Eligible
-                                                        </span>
-                                                    @else
-                                                        <span class="badge bg-danger">
-                                                            <i class="fas fa-times"></i> Not Eligible
-                                                        </span>
-                                                    @endif
-                                                </td>
-                                                
-                                                @if($eligibility['reason'] != "Endorsement already held")
-                                                    <td>{{ $eligibility['reason'] }}</td>
-                                                @else
-                                                    <td></td>
-                                                @endif
-                                            </tr>
+                                        <td>{{ $eligibility['rating']['name'] }}</td>
+                                        <td>
+                                            @if($eligibility['eligible'])
+                                                <span class="badge bg-success">
+                                                    <i class="fas fa-check"></i> Eligible
+                                                </span>
+                                            @else
+                                                <span class="badge bg-danger">
+                                                    <i class="fas fa-times"></i> Not Eligible
+                                                </span>
+                                            @endif
+                                        </td>
+                                        @if($eligibility['reason'] != "Endorsement already held")
+                                            <td>{{ $eligibility['reason'] }}</td>
+                                        @else
+                                            <td></td>
                                         @endif
-                                    @endforeach
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
+                                    </tr>
+                                @endif
+                            @endforeach
+                        </tbody>
+                    </table>
                 </div>
-                @endif
+            </div>
+        </div>
+        @endif
 
         <div class="card shadow mb-4">
-        
-
-            <!-- Card Header - Dropdown -->
+            <!-- Card Header -->
             <div class="card-header bg-primary py-3 d-flex flex-row align-items-center justify-content-between">
                 <h6 class="m-0 fw-bold text-white">My Trainings</h6>
             </div>
@@ -334,9 +324,10 @@
         </div>
     </div>
 
-    <div class="col-xl-8 col-lg-5">
+    <!-- Right column -->
+    <div class="col-xl-4 col-lg-5">
         <div class="card shadow mb-4">
-            <!-- Card Header - Dropdown -->
+            <!-- Card Header -->
             <div class="card-header bg-primary py-3 d-flex flex-row align-items-center justify-content-between">
                 <h6 class="m-0 fw-bold text-white">Request Training</h6>
             </div>

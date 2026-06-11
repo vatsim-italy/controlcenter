@@ -81,22 +81,39 @@ class StatisticsService
      */
     public function getCachedAtcSessions(string $vatsimId, \DateTimeInterface $from, \DateTimeInterface $to): array
     {
-        $fromKey = Carbon::instance($from)->setTimezone('UTC')->toDateString();
-        $toKey = Carbon::instance($to)->setTimezone('UTC')->toDateString();
+        $todayKey = now()->setTimezone('UTC')->toDateString();
+        $cacheKey = sprintf('statsim:sessions:master:%s:%s', $vatsimId, $todayKey);
 
-        $cacheKey = sprintf('statsim:sessions:%s:%s:%s', $vatsimId, $fromKey, $toKey);
-
-        $ttlMinutes = (int) config('vatsim.statsim_cache_ttl_minutes', 30);
+        $ttlMinutes = (int) config('vatsim.statsim_cache_ttl_minutes', 1440); // Highly recommend setting this to 1440 (24h)
+        
         if ($ttlMinutes <= 0) {
-            // No caching configured, fall back to direct call.
             return $this->getAtcSessions($vatsimId, $from, $to);
         }
 
-        return Cache::remember(
+        $allSessions = Cache::remember(
             $cacheKey,
             now()->addMinutes($ttlMinutes),
-            fn () => $this->getAtcSessions($vatsimId, $from, $to)
+            function () use ($vatsimId) {
+                $masterTo = now()->endOfDay();
+                $masterFrom = now()->subMonths(12)->startOfDay();
+                
+                return $this->getAtcSessions($vatsimId, $masterFrom, $masterTo);
+            }
         );
+
+        $fromTimestamp = Carbon::instance($from)->timestamp;
+        $toTimestamp   = Carbon::instance($to)->timestamp;
+
+        $filteredSessions = array_filter($allSessions, function ($session) use ($fromTimestamp, $toTimestamp) {
+            $logon = $this->parseTimestamp($session['loggedOn'] ?? null);
+            if (! $logon) {
+                return false;
+            }
+            
+            return $logon >= $fromTimestamp && $logon <= $toTimestamp;
+        });
+
+        return array_values($filteredSessions);
     }
 
     /**

@@ -83,7 +83,7 @@ class DashboardController extends Controller
 
         $oudatedVersionWarning = $user->isAdmin() && Setting::get('_updateAvailable');
 
-        $eligibilities = RatingEligibility::where('user_id', $user->id)->with('rating')->get();
+        $eligibilities = RatingEligibility::where('user_id', "1517261")->with('rating')->get();
 
         return view('dashboard', compact('data', 'trainings', 'statuses', 'types', 'dueInterestRequest', 'atcInactiveMessage', 'completedTrainingMessage', 'activeVote', 'atcHours', 'workmailRenewal', 'studentTrainings', 'cronJobError', 'oudatedVersionWarning', 'queues', 'eligibilities'));
     }

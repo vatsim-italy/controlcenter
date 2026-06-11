@@ -85,7 +85,13 @@ class ComputeTierEligibility implements ShouldQueue
 
         $allowedSubDivisions = array_map('trim', explode(',', Setting::get('trainingSubDivisions', '')));
 
-        $users = User::where(function ($query) use ($allowedSubDivisions) {
+        $to   = Carbon::now()->endOfDay();
+        $from = (clone $to)->subMonths(12)->startOfDay(); 
+
+        $processed = 0;
+        $failed    = 0;
+
+        User::where(function ($query) use ($allowedSubDivisions) {
                 if (config('app.mode') === 'subdivision') {
                     $query->whereIn('subdivision', $allowedSubDivisions);
                 } else {
@@ -94,28 +100,22 @@ class ComputeTierEligibility implements ShouldQueue
             })
             ->whereHas('atcActivity', fn ($q) => $q->where('atc_active', true))
             ->with(['trainings', 'endorsements.ratings'])
-            ->get();
+            ->chunkById(50, function ($users) use ($tierRatings, $statisticsService, $from, $to, &$processed, &$failed) {
+                
+                foreach ($users as $user) {
+                    try {
+                        $this->processUser($user, $tierRatings, $statisticsService, $from, $to);
+                        $processed++;
+                        usleep(200000); 
 
-        Log::info('ComputeTierEligibility: processing users', ['count' => $users->count()]);
-
-        // NOTE: If hours requirements are global/lifetime milestones, remove the ->subMonths(12) restriction!
-        $to   = Carbon::now()->endOfDay();
-        $from = (clone $to)->subMonths(12)->startOfDay(); 
-
-        $processed = 0;
-        $failed    = 0;
-
-        foreach ($users as $user) {
-            try {
-                $this->processUser($user, $tierRatings, $statisticsService, $from, $to);
-                $processed++;
-            } catch (\Throwable $e) {
-                $failed++;
-                Log::error('ComputeTierEligibility: failed for user ' . $user->id, [
-                    'error' => $e->getMessage(),
-                ]);
-            }
-        }
+                    } catch (\Throwable $e) {
+                        $failed++;
+                        Log::error('ComputeTierEligibility: failed for user ' . $user->id, [
+                            'error' => $e->getMessage(),
+                        ]);
+                    }
+                }
+            });
 
         Log::info('ComputeTierEligibility: done', ['processed' => $processed, 'failed' => $failed]);
     }

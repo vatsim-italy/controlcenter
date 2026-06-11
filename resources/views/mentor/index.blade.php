@@ -31,7 +31,7 @@
                                 <th data-field="level" data-sortable="true" data-filter-control="select" data-filter-strict-search="true">Level</th>
                                 <th data-field="type" data-sortable="true" data-filter-control="select" data-filter-data-collector="tableFilterStripHtml" data-filter-strict-search="false">Type</th>
                                 <th data-field="period" data-sortable="true" data-filter-control="input">Period</th>
-                                <th data-field="lastreport" data-sortable="true" data-sorter="tableSortDates" data-filter-control="input" data-filter-data-collector="tableFilterStripHtml" data-filter-strict-search="false">Last Report</th>
+                                <th data-field="lastreport" data-sortable="true" data-sorter="tableSortDates" data-filter-control="input" data-filter-data-collector="tableFilterStripHtml" data-filter-strict-search="false">Last Evaluation</th>
                                 <th data-field="area" data-sortable="true" data-filter-control="select">Area</th>
                             </tr>
                         </thead>
@@ -77,9 +77,9 @@
                                     @endif
                                 </td>
                                 <td>
-                                    @if($training->reports->count() > 0)
+                                    @if($training->evaluations->count() > 0)
                                         @php
-                                            $reportDate = Carbon\Carbon::make($training->reports->last()->report_date);
+                                            $reportDate = Carbon\Carbon::make($training->evaluations->last()->created_at);
                                             $trainingIntervalExceeded = $reportDate->diffInDays() >= Setting::get('trainingInterval');
                                         @endphp
 

@@ -20,6 +20,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
+use App\Models\RatingEligibility;
 
 /**
  * Controller to handle user views
@@ -203,11 +204,13 @@ class UserController extends Controller
                 (string) $user->id,
                 $from,
                 $to,
-                1
+                30
             )
         );
 
-        return view('user.show', compact('user', 'groups', 'areas', 'trainings', 'statuses', 'types', 'endorsements', 'areas', 'divisionExams', 'atcActivityHours', 'totalHours', 'recentAtcSessions', 'userFeedbacks'));
+        $eligibilities = RatingEligibility::where('user_id', $user->id)->with('rating')->get();
+
+        return view('user.show', compact('user', 'groups', 'areas', 'trainings', 'statuses', 'types', 'endorsements', 'areas', 'divisionExams', 'atcActivityHours', 'totalHours', 'recentAtcSessions', 'userFeedbacks', 'eligibilities'));
     }
 
     /**

@@ -196,7 +196,6 @@ class ComputeTierEligibility implements ShouldQueue
     ): array {
         $unmet = [];
 
-        // 1. Fixed Dependency Check: Checks if eligible OR if they already hold the asset
         foreach ($config['depends_on'] as $dep) {
             $depRating = $tierRatings->get($dep);
             $holdsEndorsement = $depRating ? $user->hasEndorsementRating($depRating) : false;
@@ -206,7 +205,6 @@ class ComputeTierEligibility implements ShouldQueue
             }
         }
 
-        // 2. Fixed Rating Check & Targeted Date Lookup
         if ($user->rating < $config['min_rating']->value) {
             $unmet[] = $config['min_rating']->name . ' rating required';
         } elseif ($user->rating === $config['min_rating']->value) {
@@ -220,7 +218,6 @@ class ComputeTierEligibility implements ShouldQueue
             }
         }
 
-        // 3. Position hours
         $logged = $hoursCache[$config['position']] ?? 0.0;
         if ($logged < $config['hours']) {
             $unmet[] = sprintf(
@@ -231,7 +228,6 @@ class ComputeTierEligibility implements ShouldQueue
             );
         }
 
-        // 4. Extra prefix hours
         if (isset($config['extra_hours'])) {
             $prefix        = $config['extra_hours']['prefix'];
             $extraRequired = $config['extra_hours']['required'];
@@ -253,18 +249,24 @@ class ComputeTierEligibility implements ShouldQueue
         ];
     }
 
-    // Pass the specific target rating required to avoid generic date hijacking
     private function getRatingObtainedAt(User $user, VatsimRating $targetRating): ?Carbon
     {
         $training = $user->trainings
-            ->where('status', -1)
-            ->whereNotNull('closed_at')
-            // Assuming your training model tracks the rating value/identifier reached
-            ->where('rating_id', $targetRating->value) 
+            ->filter(function ($training) use ($targetRating) {
+
+                if ($training->status !== -1 || ! $training->closed_at) {
+                    return false;
+                }
+
+                $rating = $training->getHighestVatsimRating();
+
+                return $rating
+                    && $rating->vatsim_rating === $targetRating->value;
+            })
             ->sortByDesc('closed_at')
             ->first();
 
-        return $training ? Carbon::parse($training->closed_at) : null;
+        return $training?->closed_at;
     }
 
     private function sumHoursByPositionType(array $sessions, array $suffixes): float

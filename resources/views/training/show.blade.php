@@ -95,7 +95,7 @@
                                 in_array($ratings->first()->name, ['S1', 'S2'], true);
                         @endphp
 
-                        @if($training->status === \App\Helpers\TrainingStatus::IN_QUEUE->value && $hasSingleEntryExamRating)
+                        @if($training->status === \App\Helpers\TrainingStatus::IN_QUEUE->value && $hasSingleEntryExamRating && $training->type === 1)
                             Awaiting Entry Exam
                         @else
                             {{ $statuses[$training->status]['text'] }}

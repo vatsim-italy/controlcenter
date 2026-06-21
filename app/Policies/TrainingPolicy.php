@@ -81,10 +81,16 @@ class TrainingPolicy
             return Response::deny('We are currently not accepting new training requests');
         }
 
+        $isVisitor = $user->endorsements()
+            ->where('type', 'VISITING')
+            ->where('revoked', false)
+            ->where('expired', false)
+            ->exists();
+            
         // Only users within our subdivision should be allowed to apply
         if (config('app.mode') == 'subdivision') {
             $allowedSubDivisions = explode(',', Setting::get('trainingSubDivisions'));
-            if (! in_array($user->subdivision, $allowedSubDivisions) && $allowedSubDivisions != null) {
+            if (! in_array($user->subdivision, $allowedSubDivisions) && $allowedSubDivisions != null && !$isVisitor) {
                 $subdiv = 'none';
                 if (isset($user->subdivision)) {
                     $subdiv = $user->subdivision;
@@ -93,7 +99,7 @@ class TrainingPolicy
                 return Response::deny("You must join {$divisionName} to apply for training. You currently belong to " . $subdiv);
             }
         } else {
-            if ($user->division != config('app.owner_code')) {
+            if ($user->division != config('app.owner_code') && ! $isVisitor) {
                 return Response::deny("You must join {$divisionName} division to apply for training. You currently belong to " . $user->division);
             }
         }
@@ -104,7 +110,7 @@ class TrainingPolicy
         }
 
         // Not active users are forced to ask for a manual creation of refresh
-        if (! $user->hasActiveTrainings(true) && $user->rating > 1 && ! $user->isAtcActive()) {
+        if (! $user->hasActiveTrainings(true) && $user->rating > 1 && ! $user->isAtcActive() && !$isVisitor) {
             return Response::deny("Your ATC rating is inactive in {$divisionName}");
         }
 

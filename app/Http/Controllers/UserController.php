@@ -10,7 +10,6 @@ use App\Http\Requests\StatisticsSessionsRequest;
 use App\Models\Area;
 use App\Models\AtcActivity;
 use App\Models\Feedback;
-use App\Models\Group;
 use App\Models\TrainingExamination;
 use App\Models\TrainingReport;
 use App\Models\User;
@@ -132,7 +131,6 @@ class UserController extends Controller
     {
         $this->authorize('view', $user);
         $userAuth =  Auth::user();
-        $groups = Group::all();
 
         $roles = config('roles.roles');
         $areas = Area::all();
@@ -231,7 +229,7 @@ class UserController extends Controller
             )
         );
 
-        return view('user.show', compact('user', 'roles', 'areas', 'trainings', 'statuses', 'types', 'endorsements', 'areas', 'divisionExams', 'atcActivityHours', 'totalHours', 'recentAtcSessions'));
+        return view('user.show', compact('user', 'roles', 'areas', 'trainings', 'statuses', 'types', 'endorsements', 'areas', 'divisionExams', 'atcActivityHours', 'totalHours', 'recentAtcSessions', 'userFeedbacks'));
     }
 
     /**

@@ -177,7 +177,7 @@ class ReportController extends Controller
                 ->when($filterArea, function (Builder $query, $filterArea) {
                     $query->whereHas('training', fn (Builder $q) => $q->where('area_id', $filterArea));
                 })
-                ->where('published_at', '>=', $activities->last()->created_at)
+                ->where('updated_at', '>=', $activities->last()->created_at)
                 ->get();
 
             $examinationReports = TrainingExamination::where('created_at', '>=', $activities->last()->created_at)
@@ -572,14 +572,13 @@ class ReportController extends Controller
         $queryEnd = $endDate ?? now()->endOfDay();
 
         // Volume: count of non-draft reports per rating, scoped by activity date.
-        $activityDate = Sql::coalesce('training_reports.published_at', 'training_reports.created_at');
+        $activityDate = Sql::coalesce('evaluations.updated_at', 'evaluations.created_at');
 
-        $volumeQuery = DB::table('training_reports')
-            ->select('ratings.id as rating_id', 'ratings.name as rating_name', DB::raw('count(training_reports.id) as volume'))
-            ->join('trainings', 'trainings.id', '=', 'training_reports.training_id')
+        $volumeQuery = DB::table('evaluations')
+            ->select('ratings.id as rating_id', 'ratings.name as rating_name', DB::raw('count(evaluations.eval_id) as volume'))
+            ->join('trainings', 'trainings.id', '=', 'evaluations.training_id')
             ->join('rating_training', 'rating_training.training_id', '=', 'trainings.id')
             ->join('ratings', 'ratings.id', '=', 'rating_training.rating_id')
-            ->where('training_reports.draft', false)
             ->whereRaw("$activityDate >= ?", [$queryStart])
             ->whereRaw("$activityDate <= ?", [$queryEnd])
             ->groupBy('ratings.id', 'ratings.name');
@@ -601,7 +600,7 @@ class ReportController extends Controller
             ->select(
                 'ratings.id as rating_id',
                 'ratings.name as rating_name',
-                DB::raw('count(training_reports.id) as report_count')
+                DB::raw('count(evaluations.eval_id) as report_count')
             )
             ->join('rating_training', 'rating_training.training_id', '=', 'trainings.id')
             ->join('ratings', 'ratings.id', '=', 'rating_training.rating_id')
@@ -609,9 +608,8 @@ class ReportController extends Controller
             // the sample. A closed training that never recorded a session is a queue
             // drop-out, not a training that "took zero sessions", so counting it
             // would wrongly drag the average/median toward zero.
-            ->join('training_reports', function ($join) {
-                $join->on('training_reports.training_id', '=', 'trainings.id')
-                    ->where('training_reports.draft', '=', false);
+            ->join('evaluations', function ($join) {
+                $join->on('evaluations.training_id', '=', 'trainings.id');
             })
             ->whereIn('trainings.status', [-1, -2])
             ->whereBetween('trainings.closed_at', [$queryStart, $queryEnd])

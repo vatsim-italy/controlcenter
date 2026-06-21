@@ -564,4 +564,31 @@ class User extends Authenticatable
             ->whereNull('area_id')
             ->isNotEmpty();
     }
+
+    public function isModeratorOrAbove(?Area $area = null): bool
+    {
+        $areas = $area ? [$area] : Area::all();
+        foreach ($areas as $area) {
+            if ($this->hasRole('moderator', $area) || $this->hasRole('director', $area) || $this->hasRole('admin')) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    public function isMentorOrAbove(?Area $area = null): bool
+    {
+        $areas = $area ? [$area] : Area::all();
+        foreach ($areas as $area) {
+            if ($this->hasRole('mentor', $area) || $this->hasRole('moderator', $area) || $this->hasRole('director', $area) || $this->hasRole('admin')) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    public function isAdmin(): bool
+    {
+        return $this->hasRole('admin');
+    }
 }

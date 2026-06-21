@@ -32,7 +32,7 @@
                     <dt>Name</dt>
                     <dd>{{ $user->first_name.' '.$user->last_name }}<button type="button" onclick="navigator.clipboard.writeText('{{ $user->first_name.' '.$user->last_name }}')"><i class="fas fa-copy"></i></button></dd>
 
-                    @if(\Auth::user()->isModeratorOrAbove())
+                    @if()
                         <dt>Email</dt>
                         <dd class="separator pb-3">{{ $user->email }}<button type="button" onclick="navigator.clipboard.writeText('{{ $user->email }}')"><i class="fas fa-copy"></i></button></dd>
                     @endif

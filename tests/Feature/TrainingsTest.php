@@ -2,6 +2,9 @@
 
 namespace Tests\Feature;
 
+use App\Helpers\VatsimRating;
+use App\Models\Area;
+use App\Models\Rating;
 use App\Models\Training;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -35,6 +38,32 @@ class TrainingsTest extends TestCase
     //    }
 
     #[Test]
+    public function training_page_only_offers_rating_tasks_for_vatsim_rating_trainings()
+    {
+        $moderator = User::factory()->create();
+
+        $facilityTraining = Training::factory()
+            ->has(Rating::factory(['vatsim_rating' => null]))
+            ->create(['user_id' => User::factory()->create()->id]);
+        $moderator->roleAssignments()->create(['role' => 'moderator', 'area_id' => $facilityTraining->area->id]);
+
+        $this->actingAs($moderator)->get($facilityTraining->path())
+            ->assertSeeText('Custom Request')
+            ->assertDontSeeText('Rating Upgrade')
+            ->assertDontSeeText('Theoretical Exam Access');
+
+        $combinedTraining = Training::factory()
+            ->has(Rating::factory(['vatsim_rating' => VatsimRating::S2, 'name' => 'TST-S2']))
+            ->create(['user_id' => User::factory()->create()->id, 'area_id' => $facilityTraining->area_id]);
+        $combinedTraining->ratings()->save(Rating::factory()->create(['vatsim_rating' => null, 'name' => 'TST-MAE']));
+
+        $this->actingAs($moderator)->get($combinedTraining->path())
+            ->assertSeeText('Rating Upgrade')
+            ->assertSeeText('Theoretical Exam Access')
+            ->assertSee('for <b>TST-S2</b> rating', false);
+    }
+
+    #[Test]
     public function guest_cant_create_training_request()
     {
         $attributes = [
@@ -42,12 +71,23 @@ class TrainingsTest extends TestCase
             'englishOnly' => (int) $this->faker->boolean,
             'motivation' => $this->faker->realText(1500, 2),
             'comment' => '',
-            'training_level' => \App\Models\Rating::find($this->faker->numberBetween(1, 7))->id,
-            'training_area' => \App\Models\Area::find($this->faker->numberBetween(1, 5))->id,
+            'training_level' => Rating::find($this->faker->numberBetween(1, 7))->id,
+            'training_area' => Area::find($this->faker->numberBetween(1, 5))->id,
         ];
 
         $response = $this->post('/training/store', $attributes);
         $response->assertRedirect('/login');
+    }
+
+    #[Test]
+    public function test_director_is_eligible_as_training_mentor_in_their_area(): void
+    {
+        $area = Area::factory()->create();
+        $director = User::factory()->create();
+        $director->roleAssignments()->create(['role' => 'director', 'area_id' => $area->id]);
+
+        $this->assertTrue($director->hasPermission('training.mentor', $area));
+        $this->assertTrue($director->hasPermission('training.mentor-dashboard.view'));
     }
 
     #[Test]
@@ -59,7 +99,7 @@ class TrainingsTest extends TestCase
             'user_id' => User::factory()->create(['id' => 10000005])->id,
         ]);
 
-        $moderator->groups()->attach(2, ['area_id' => $training->area->id]);
+        $moderator->roleAssignments()->create(['role' => 'moderator', 'area_id' => $training->area->id]);
 
         $this->assertDatabaseHas('trainings', ['id' => $training->id]);
 
@@ -78,7 +118,7 @@ class TrainingsTest extends TestCase
             'user_id' => User::factory()->create(['id' => 10000005])->id,
         ]);
         $user = $training->user;
-        $user->groups()->attach(3, ['area_id' => $training->area->id]);
+        $user->roleAssignments()->create(['role' => 'mentor', 'area_id' => $training->area->id]);
 
         $this->assertDatabaseHas('trainings', ['id' => $training->id]);
 
@@ -94,7 +134,7 @@ class TrainingsTest extends TestCase
             'user_id' => User::factory()->create(['id' => 10000005])->id,
         ]);
         $moderator = User::factory()->create();
-        $moderator->groups()->attach(1, ['area_id' => $training->area->id]);
+        $moderator->roleAssignments()->create(['role' => 'admin', 'area_id' => null]);
 
         $this->actingAs($moderator)->patch(route('training.update', ['training' => $training->id]), ['status' => 0]);
 
@@ -173,6 +213,16 @@ class TrainingsTest extends TestCase
     //    }
 
     #[Test]
+    public function test_director_can_create_training_requests_for_others(): void
+    {
+        $director = User::factory()->create();
+        $director->roleAssignments()->create(['role' => 'director', 'area_id' => null]);
+
+        $this->assertTrue($director->can('create', Training::class));
+        $this->assertTrue($director->hasPermission('training.activities.view', Area::factory()->create()));
+    }
+
+    #[Test]
     public function a_mentor_cant_be_added_if_they_are_not_a_mentor_in_the_right_area()
     {
         $training = Training::factory()->create([
@@ -180,10 +230,10 @@ class TrainingsTest extends TestCase
             'area_id' => 1,
         ]);
         $moderator = User::factory()->create();
-        $moderator->groups()->attach(2, ['area_id' => $training->area->id]);
+        $moderator->roleAssignments()->create(['role' => 'moderator', 'area_id' => $training->area->id]);
         $mentor = User::factory()->create();
 
-        $mentor->groups()->attach(3, ['area_id' => 2]);
+        $mentor->roleAssignments()->create(['role' => 'mentor', 'area_id' => 2]);
 
         $this->actingAs($moderator)
             ->patchJson(route('training.update.details', ['training' => $training]), ['mentors' => [$mentor->id]])

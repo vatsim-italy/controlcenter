@@ -11,7 +11,7 @@
         "@popperjs/core": "^2.11.8",
         "@vitejs/plugin-vue": "^6.0.0",
         "bootstrap": "^5.3.0",
-        "bootstrap-table": "1.27.0",
+        "bootstrap-table": "1.27.3",
         "chart.js": "^4.4.0",
         "chartjs-adapter-moment": "^1.0.1",
         "chartjs-plugin-autocolors": "^0.3.1",
@@ -20,8 +20,11 @@
         "flatpickr": "^4.6.13",
         "laravel-vite-plugin": "^2.0.0",
         "moment": "^2.29.1",
-        "sass": "1.90.0",
+        "sass": "1.101.0",
         "vite": "^7.0.0",
-        "vue": "^3.0"
+        "sortablejs": "^1.15.7",
+        "vue": "^3.0",
+        "tailwindcss": "^4.3.0",
+        "@tailwindcss/vite": "^4.3.0"
     }
 }

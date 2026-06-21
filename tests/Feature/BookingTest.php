@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use App\Helpers\VatsimRating;
+use App\Models\Area;
 use App\Models\Booking;
 use App\Models\Endorsement;
 use App\Models\Position;
@@ -94,6 +95,64 @@ class BookingTest extends TestCase
             ->whereNotNull('name')->inRandomOrder()->orderByDesc('rating')->first();
         $this->assertCreateBookingAvailable($controller, $position);
         $this->createBooking($controller, $position)->assertValid()->assertDontSeeText('training tag');
+    }
+
+    #[Test]
+    public function student_with_combined_training_can_book_position_for_highest_rating(): void
+    {
+        $student = User::factory()->create([
+            'rating' => VatsimRating::S1->value,
+        ]);
+
+        // Combined S1+S2+facility training: the lower rating is attached first
+        // so an unordered ratings query would return S1 instead of S2.
+        $training = Training::factory()
+            ->has(Rating::factory(['vatsim_rating' => VatsimRating::S1]))
+            ->create(['user_id' => $student->id, 'type' => 1, 'status' => 2, 'area_id' => TEST_USER_TRAINING_AREA]);
+        $training->ratings()->save(Rating::factory()->create(['vatsim_rating' => VatsimRating::S2]));
+        $training->ratings()->save(Rating::factory()->create(['vatsim_rating' => null]));
+
+        $position = Position::factory()->create([
+            'rating' => VatsimRating::S2->value,
+            'callsign' => 'TEST_TWR',
+            'name' => 'Test Tower',
+            'area_id' => TEST_USER_TRAINING_AREA,
+        ]);
+
+        $this->assertCreateBookingAvailable($student, $position);
+        $this->createBooking($student, $position)->assertValid();
+    }
+
+    #[Test]
+    public function student_with_facility_training_cannot_book_position_above_their_rating(): void
+    {
+        $student = User::factory()->create([
+            'rating' => VatsimRating::S1->value,
+        ]);
+
+        // Facility (MAE) training: no VATSIM rating attached
+        Training::factory()
+            ->has(Rating::factory(['vatsim_rating' => null]))
+            ->create(['user_id' => $student->id, 'type' => 1, 'status' => 2, 'area_id' => TEST_USER_TRAINING_AREA]);
+
+        $position = Position::factory()->create([
+            'rating' => VatsimRating::C1->value,
+            'callsign' => 'TEST_APP',
+            'name' => 'Test Approach',
+            'area_id' => TEST_USER_TRAINING_AREA,
+        ]);
+
+        $startDate = Carbon::tomorrow()->addHours(2);
+        $bookingRequest = [
+            'date' => $startDate->format('d/m/Y'),
+            'start_at' => $startDate->format('H:i'),
+            'end_at' => $startDate->copy()->addHours(2)->format('H:i'),
+            'position' => $position->callsign,
+        ];
+
+        $this->actingAs($student)->post(route('booking.store'), $bookingRequest)
+            ->assertStatus(403);
+        $this->assertNull(Booking::first());
     }
 
     #[Test]
@@ -229,6 +288,27 @@ class BookingTest extends TestCase
 
         $this->actingAs($user)->followingRedirects()->postJson(route('booking.store', ['id' => $booking->id]), $booking->getAttributes())
             ->assertStatus(403);
+    }
+
+    #[Test]
+    public function test_director_can_update_other_users_booking(): void
+    {
+        $director = User::factory()->create();
+        $director->roleAssignments()->create(['role' => 'director', 'area_id' => null]);
+        $booking = Booking::factory()->create(['user_id' => User::factory()->create()->id, 'source' => 'CC']);
+
+        $this->assertTrue($director->can('update', $booking));
+    }
+
+    #[Test]
+    public function test_mentor_cannot_update_other_users_booking(): void
+    {
+        $area = Area::factory()->create();
+        $mentor = User::factory()->create();
+        $mentor->roleAssignments()->create(['role' => 'mentor', 'area_id' => $area->id]);
+        $booking = Booking::factory()->create(['user_id' => User::factory()->create()->id, 'source' => 'CC']);
+
+        $this->assertFalse($mentor->can('update', $booking));
     }
 
     #[Test]

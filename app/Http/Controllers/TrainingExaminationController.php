@@ -5,7 +5,6 @@ namespace App\Http\Controllers;
 use App\Facades\DivisionApi;
 use App\Helpers\TrainingStatus;
 use App\Helpers\VatsimRating;
-use App\Models\Group;
 use App\Models\OneTimeLink;
 use App\Models\Position;
 use App\Models\Task;
@@ -15,10 +14,17 @@ use App\Models\User;
 use App\Notifications\MentorExaminationNotification;
 use App\Notifications\TrainingExamNotification;
 use App\Services\DiscordNotifier;
+use App\Services\ActivityLogService;
+use App\Tasks\Types\RatingUpgrade;
 use Carbon\Carbon;
+use Illuminate\Auth\Access\AuthorizationException;
+use Illuminate\Contracts\View\Factory;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Validation\Rule;
+use Illuminate\View\View;
 
 /**
  * Controller for training examinations
@@ -28,9 +34,9 @@ class TrainingExaminationController extends Controller
     /**
      * Show view to create an examination
      *
-     * @return \Illuminate\Contracts\View\Factory|\Illuminate\View\View
+     * @return Factory|View
      *
-     * @throws \Illuminate\Auth\Access\AuthorizationException
+     * @throws AuthorizationException
      */
     public function create(Request $request, Training $training)
     {
@@ -53,7 +59,10 @@ class TrainingExaminationController extends Controller
         $positions = Position::where('rating', '=', $ratingNumber)->get();
 
         $examiners = $training->area->mentors->sortBy('name');
-        $taskRecipients = collect(Group::admins()->merge(Group::moderators()));
+        $taskRecipients = collect(User::whereHas('roleAssignments', function ($q) {
+            $q->whereIn('role', ['admin', 'moderator']);
+        })->get());
+        
         $taskPopularAssignees = TaskController::getPopularAssignees($training->area);
 
         $examFields = config('pdf')[$lastRating] ?? [];
@@ -64,9 +73,9 @@ class TrainingExaminationController extends Controller
     /**
      * Store the examination in the database
      *
-     * @return \Illuminate\Http\JsonResponse|\Illuminate\Http\RedirectResponse
+     * @return JsonResponse|RedirectResponse
      *
-     * @throws \Illuminate\Auth\Access\AuthorizationException
+     * @throws AuthorizationException
      */
     public function store(Request $request, Training $training)
     {
@@ -115,7 +124,7 @@ class TrainingExaminationController extends Controller
             $taskRating = isset($data['subject_training_rating_id']) ? (int) $data['subject_training_rating_id'] : null;
             if ($taskAsignee->can('receive', Task::class)) {
                 $task = Task::create([
-                    'type' => \App\Tasks\Types\RatingUpgrade::class,
+                    'type' => RatingUpgrade::class,
                     'subject_user_id' => $training->user->id,
                     'subject_training_id' => $training->id,
                     'subject_training_rating_id' => $taskRating,
@@ -168,9 +177,9 @@ class TrainingExaminationController extends Controller
     }
 
     /**
-     * @return \Illuminate\Http\JsonResponse|\Illuminate\Http\RedirectResponse
+     * @return JsonResponse|RedirectResponse
      *
-     * @throws \Illuminate\Auth\Access\AuthorizationException
+     * @throws AuthorizationException
      */
     public function update(Request $request, TrainingExamination $examination)
     {
@@ -186,16 +195,15 @@ class TrainingExaminationController extends Controller
     }
 
     /**
-     * @return \Illuminate\Http\JsonResponse|\Illuminate\Http\RedirectResponse
+     * @return JsonResponse|RedirectResponse
      *
-     * @throws \Illuminate\Auth\Access\AuthorizationException
+     * @throws AuthorizationException
      */
     public function destroy(Request $request, TrainingExamination $examination)
     {
         $this->authorize('delete', $examination);
 
         $examination->delete();
-        ActivityLogController::danger('TRAINING', 'Deleted training examination ' . $examination->id . ' ― From Training ' . $examination->training->id);
         DiscordNotifier::send(
             'Training Examination Deleted',
             "Examination #{$examination->id} was deleted",
@@ -205,6 +213,7 @@ class TrainingExaminationController extends Controller
                 'Deleted by' => auth()->user()->name ?? 'System',
             ]
         );
+        ActivityLogService::danger('TRAINING', 'Deleted training examination ' . $examination->id . ' ― From Training ' . $examination->training->id);
 
         if ($request->wantsJson()) {
             return response()->json(['message' => 'Examination successfully deleted']);

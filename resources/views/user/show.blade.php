@@ -23,9 +23,9 @@
                     <dd>
                         {{ $user->id }}
                         <button type="button" onclick="navigator.clipboard.writeText('{{ $user->id }}')"><i class="fas fa-copy"></i></button>
-                        <a href="https://stats.vatsim.net/stats/{{ $user->id }}" target="_blank" title="VATSIM Stats" class="link-btn me-1"><i class="fas fa-chart-simple"></i></a>
-                        @if($user->division == 'EUD' && Auth::user()->isModeratorOrAbove())
-                            <a href="https://core.vateud.net/manage/controller/{{ $user->id }}/view" target="_blank" title="VATEUD Core Profile" class="link-btn"><i class="fa-solid fa-earth-europe"></i></a>
+                        <a href="https://stats.vatsim.net/stats/{{ $user->id }}" target="_blank" title="VATSIM Stats" class="link-btn me-1"><i class="fas fa-chart-simple"></i></button></a>
+                        @if($user->division == 'EUD' && Auth::user()->can('users.manage'))
+                            <a href="https://core.vateud.net/manage/controller/{{ $user->id }}/view" target="_blank" title="VATEUD Core Profile" class="link-btn"><i class="fa-solid fa-earth-europe"></i></button></a>
                         @endif
                     </dd>
 
@@ -85,10 +85,10 @@
                     <dt class="pt-2">Last login</dt>
                     <dd>{{ $user->last_login->toEuropeanDateTime() }}</dd>
 
-                    @if(\Auth::user()->isModeratorOrAbove())
+                    @can('users.manage')
                         <dt class="pt-2">Last activity</dt>
                         <dd>{{ isset($user->last_activity) ? $user->last_activity->toEuropeanDateTime() : 'N/A' }}</dd>
-                    @endif
+                    @endcan
 
                 </dl>
             </div>
@@ -383,12 +383,12 @@
                                         </tr>
                                         <tr>
                                             <th>Issued by</th>
-                                            <td>{{ isset($endorsement->issued_by) ? \App\Models\User::find($endorsement->issued_by)->name : 'System' }}</td>
+                                            <td>{{ $endorsement->issuedBy?->name ?? 'System' }}</td>
                                         </tr>
                                         @if($endorsement->revoked)
                                             <tr>
                                                 <th>Revoked by</th>
-                                                <td>{{ isset($endorsement->revoked_by) ? \App\Models\User::find($endorsement->revoked_by)->name : 'System' }}</td>
+                                                <td>{{ $endorsement->revokedBy?->name ?? 'System' }}</td>
                                             </tr>
                                         @endif
                                     @elseif($endorsement->type == 'SOLO')
@@ -406,12 +406,12 @@
                                         </tr>
                                         <tr>
                                             <th>Issued by</th>
-                                            <td>{{ isset($endorsement->issued_by) ? \App\Models\User::find($endorsement->issued_by)->name : 'System' }}</td>
+                                            <td>{{ $endorsement->issuedBy?->name ?? 'System' }}</td>
                                         </tr>
                                         @if($endorsement->revoked)
                                             <tr>
                                                 <th>Revoked by</th>
-                                                <td>{{ isset($endorsement->revoked_by) ? \App\Models\User::find($endorsement->revoked_by)->name : 'System' }}</td>
+                                                <td>{{ $endorsement->revokedBy?->name ?? 'System' }}</td>
                                             </tr>
                                         @endif
                                     @elseif($endorsement->type == "VISITING")
@@ -433,12 +433,12 @@
                                         </tr>
                                         <tr>
                                             <th>Issued by</th>
-                                            <td>{{ isset($endorsement->issued_by) ? \App\Models\User::find($endorsement->issued_by)->name : 'System' }}</td>
+                                            <td>{{ $endorsement->issuedBy?->name ?? 'System' }}</td>
                                         </tr>
                                         @if($endorsement->revoked)
                                             <tr>
                                                 <th>Revoked by</th>
-                                                <td>{{ isset($endorsement->revoked_by) ? \App\Models\User::find($endorsement->revoked_by)->name : 'System' }}</td>
+                                                <td>{{ $endorsement->revokedBy?->name ?? 'System' }}</td>
                                             </tr>
                                         @endif
                                     @elseif($endorsement->type == "EXAMINER")
@@ -460,12 +460,12 @@
                                         </tr>
                                         <tr>
                                             <th>Issued by</th>
-                                            <td>{{ isset($endorsement->issued_by) ? \App\Models\User::find($endorsement->issued_by)->name : 'System' }}</td>
+                                            <td>{{ $endorsement->issuedBy?->name ?? 'System' }}</td>
                                         </tr>
                                         @if($endorsement->revoked)
                                             <tr>
                                                 <th>Revoked by</th>
-                                                <td>{{ isset($endorsement->revoked_by) ? \App\Models\User::find($endorsement->revoked_by)->name : 'System' }}</td>
+                                                <td>{{ $endorsement->revokedBy?->name ?? 'System' }}</td>
                                             </tr>
                                         @endif
                                     @endif
@@ -563,23 +563,36 @@
                                 <thead>
                                     <tr>
                                         <th>Area</th>
-                                        @foreach($groups as $group)
-                                            <th class="text-center">{{ $group->name }} <i class="fas fa-question-circle text-gray-400" title="{{ $group->description }}"></i></th>
+                                        @foreach($roles as $roleKey => $roleData)
+                                            <th class="text-center">{{ $roleData['name'] }} <i class="fas fa-question-circle text-gray-400" title="{{ $roleData['description'] }}"></i></th>
                                         @endforeach
                                     </tr>
                                 </thead>
                                 <tbody>
 
+                                    <tr>
+                                        <td><strong>Global</strong></td>
+                                        @foreach($roles as $roleKey => $roleData)
+
+                                            @if (\Illuminate\Support\Facades\Gate::inspect('updateRole', [$user, $roleKey, null])->allowed())
+                                                <td class="text-center"><input type="checkbox" name="global_{{ $roleKey }}" {{ $user->roleAssignments->where('role', $roleKey)->whereNull('area_id')->isNotEmpty() ? 'checked' : '' }}></td>
+                                            @else
+                                                <td class="text-center"><input type="checkbox" {{ $user->roleAssignments->where('role', $roleKey)->whereNull('area_id')->isNotEmpty() ? 'checked' : '' }} disabled></td>
+                                            @endif
+
+                                        @endforeach
+                                    </tr>
+
                                     @foreach($areas as $area)
                                         <tr>
                                             <td>{{ $area->name }}</td>
 
-                                            @foreach($groups as $group)
+                                            @foreach($roles as $roleKey => $roleData)
 
-                                                @if (\Illuminate\Support\Facades\Gate::inspect('updateGroup', [$user, $group, $area])->allowed() && $group->id != 1)
-                                                    <td class="text-center"><input type="checkbox" name="{{ $area->id }}_{{ $group->name }}" {{ $user->groups()->where('group_id', $group->id)->where('area_id', $area->id)->count() ? "checked" : "" }}></td>
+                                                @if (\Illuminate\Support\Facades\Gate::inspect('updateRole', [$user, $roleKey, $area])->allowed())
+                                                    <td class="text-center"><input type="checkbox" name="{{ $area->id }}_{{ $roleKey }}" {{ $user->roleAssignments->where('role', $roleKey)->where('area_id', $area->id)->isNotEmpty() ? "checked" : "" }}></td>
                                                 @else
-                                                    <td class="text-center"><input type="checkbox" {{ $user->groups()->where('group_id', $group->id)->where('area_id', $area->id)->count() ? "checked" : "" }} disabled></td>
+                                                    <td class="text-center"><input type="checkbox" {{ $user->roleAssignments->where('role', $roleKey)->where('area_id', $area->id)->isNotEmpty() ? "checked" : "" }} disabled></td>
                                                 @endif
 
                                             @endforeach

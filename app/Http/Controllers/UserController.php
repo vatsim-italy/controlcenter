@@ -16,11 +16,22 @@ use App\Models\TrainingReport;
 use App\Models\User;
 use App\Services\StatisticsService;
 use Carbon\Carbon;
+use GuzzleHttp\Client;
+use GuzzleHttp\Exception\ClientException;
+use GuzzleHttp\Exception\RequestException;
+use Illuminate\Auth\Access\AuthorizationException;
+use Illuminate\Contracts\Foundation\Application;
+use Illuminate\Contracts\View\Factory;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Http;
 use App\Models\RatingEligibility;
+use Illuminate\View\View;
+use Symfony\Component\HttpFoundation\Response as SymfonyResponse;
 
 /**
  * Controller to handle user views
@@ -30,9 +41,9 @@ class UserController extends Controller
     /**
      * Display a listing of the resource.
      *
-     * @return \Illuminate\View\View
+     * @return View
      *
-     * @throws \Illuminate\Auth\Access\AuthorizationException
+     * @throws AuthorizationException
      */
     public function index()
     {
@@ -92,9 +103,9 @@ class UserController extends Controller
     /**
      * Display a listing of the resource.
      *
-     * @return \Illuminate\View\View
+     * @return View
      *
-     * @throws \Illuminate\Auth\Access\AuthorizationException
+     * @throws AuthorizationException
      */
     public function indexOther()
     {
@@ -113,20 +124,32 @@ class UserController extends Controller
     /**
      * Display the specified resource.
      *
-     * @return \Illuminate\Contracts\Foundation\Application|\Illuminate\Contracts\View\Factory|\Illuminate\View\View|void
+     * @return Application|Factory|View|void
      *
-     * @throws \Illuminate\Auth\Access\AuthorizationException
+     * @throws AuthorizationException
      */
     public function show(User $user, StatisticsService $statisticsService)
     {
         $this->authorize('view', $user);
         $userAuth =  Auth::user();
         $groups = Group::all();
+
+        $roles = config('roles.roles');
         $areas = Area::all();
 
         if ($user == null) {
             return abort(404);
         }
+
+        $user->load([
+            'roleAssignments',
+            'trainings.ratings',
+            'endorsements.ratings',
+            'endorsements.positions',
+            'endorsements.areas',
+            'endorsements.issuedBy',
+            'endorsements.revokedBy',
+        ]);
 
         $trainings = $user->trainings;
         $statuses = TrainingController::$statuses;
@@ -208,9 +231,7 @@ class UserController extends Controller
             )
         );
 
-        $eligibilities = RatingEligibility::where('user_id', $user->id)->with('rating')->get();
-
-        return view('user.show', compact('user', 'groups', 'areas', 'trainings', 'statuses', 'types', 'endorsements', 'areas', 'divisionExams', 'atcActivityHours', 'totalHours', 'recentAtcSessions', 'userFeedbacks', 'eligibilities'));
+        return view('user.show', compact('user', 'roles', 'areas', 'trainings', 'statuses', 'types', 'endorsements', 'areas', 'divisionExams', 'atcActivityHours', 'totalHours', 'recentAtcSessions'));
     }
 
     /**
@@ -218,7 +239,7 @@ class UserController extends Controller
      *
      * @return array
      *
-     * @throws \Illuminate\Auth\Access\AuthorizationException
+     * @throws AuthorizationException
      */
     public function search(Request $request)
     {
@@ -263,20 +284,20 @@ class UserController extends Controller
      *
      * @throws \Illuminate\Auth\Access\AuthorizationException
      */
-    public function fetchVatsimHours(Request $request)
+    public function fetchVatsimHours(Request $request): JsonResponse
     {
         $cid = $request['cid'];
 
         $vatsimStats = [];
         try {
-            $client = new \GuzzleHttp\Client();
+            $client = new Client();
             $res = $client->request('GET', 'https://api.vatsim.net/v2/members/' . $cid . '/stats');
             if ($res->getStatusCode() == 200) {
                 $vatsimStats = json_decode($res->getBody(), false);
             }
-        } catch (\GuzzleHttp\Exception\RequestException $e) {
+        } catch (RequestException $e) {
             return response()->json(['data' => null], 404);
-        } catch (\GuzzleHttp\Exception\ClientException $e) {
+        } catch (ClientException $e) {
             return response()->json(['data' => null], 404);
         }
 
@@ -286,7 +307,7 @@ class UserController extends Controller
     /**
      * AJAX: Return ATC sessions from statistics API for user
      */
-    public function fetchStatisticsSessions(StatisticsSessionsRequest $request, User $user, StatisticsService $service): \Illuminate\Http\JsonResponse
+    public function fetchStatisticsSessions(StatisticsSessionsRequest $request, User $user, StatisticsService $service): JsonResponse
     {
         try {
             $sessions = $service->getCachedAtcSessions(
@@ -310,31 +331,33 @@ class UserController extends Controller
     /**
      * Update the specified resource in storage.
      *
-     * @return \Illuminate\Http\Response
-     *
-     * @throws \Illuminate\Auth\Access\AuthorizationException
+     * @throws AuthorizationException
      */
-    public function update(Request $request, User $user)
+    public function update(Request $request, User $user): SymfonyResponse
     {
         $this->authorize('update', $user);
         $permissions = [];
 
-        // Generate a list of possible validations
+        // Generate a list of possible validations: one key per area/role cell,
+        // plus the global row (area-less assignments) keyed as global_{role}
         foreach (Area::all() as $area) {
-            foreach (Group::all() as $group) {
-                // Don't list or allow admin rank to be set through this interface
-                if ($group->id == 1) {
-                    continue;
-                }
-
+            foreach (config('roles.roles') as $roleKey => $role) {
                 // Only process ranks the user is allowed to change
-                if (! \Illuminate\Support\Facades\Gate::inspect('updateGroup', [$user, $group, $area])->allowed()) {
+                if (! Gate::inspect('updateRole', [$user, $roleKey, $area])->allowed()) {
                     continue;
                 }
 
-                $key = $area->id . '_' . $group->name;
+                $key = $area->id . '_' . $roleKey;
                 $permissions[$key] = '';
             }
+        }
+
+        foreach (config('roles.roles') as $roleKey => $role) {
+            if (! Gate::inspect('updateRole', [$user, $roleKey, null])->allowed()) {
+                continue;
+            }
+
+            $permissions['global_' . $roleKey] = '';
         }
 
         // Valiate and allow these fields, then loop through permissions to set the final data set
@@ -345,18 +368,22 @@ class UserController extends Controller
 
         // Check and update the permissions
         foreach ($permissions as $key => $value) {
-            $str = explode('_', $key);
+            [$scopeKey, $roleKey] = explode('_', $key, 2);
+            $area = $scopeKey === 'global' ? null : Area::find($scopeKey);
 
-            $area = Area::where('id', $str[0])->get()->first();
-            $group = Group::where('name', $str[1])->get()->first();
+            $assignments = $user->roleAssignments()->where('role', $roleKey)->when(
+                $area === null,
+                fn ($query) => $query->whereNull('area_id'),
+                fn ($query) => $query->where('area_id', $area->id),
+            );
 
             // Check if permission is not set, and set it or other way around.
-            if ($user->groups()->where('area_id', $area->id)->where('group_id', $group->id)->get()->count() == 0) {
+            if ($assignments->count() == 0) {
                 if ($value == true) {
-                    $this->authorize('updateGroup', [$user, $group, $area]);
+                    $this->authorize('updateRole', [$user, $roleKey, $area]);
 
                     // Call the division API to assign mentor
-                    if ($group->id == 3) {
+                    if ($roleKey == 'mentor') {
                         $response = DivisionApi::assignMentor($user, Auth::id());
                         if ($response && $response->failed()) {
                             return back()->withErrors('Request failed due to error in ' . DivisionApi::getName() . ' API: ' . $response->json()['message']);
@@ -364,27 +391,27 @@ class UserController extends Controller
                     }
 
                     // Attach the new permission
-                    $user->groups()->attach($group, ['area_id' => $area->id, 'inserted_by' => Auth::id()]);
+                    $user->roleAssignments()->create(['role' => $roleKey, 'area_id' => $area?->id]);
                 }
             } else {
                 if ($value == false) {
-                    $this->authorize('updateGroup', [$user, $group, $area]);
+                    $this->authorize('updateRole', [$user, $roleKey, $area]);
 
                     // Call the division API to assign mentor
-                    if ($group->id == 3) {
+                    if ($roleKey == 'mentor') {
                         $response = DivisionApi::removeMentor($user, Auth::id());
                         if ($response && $response->failed()) {
                             return back()->withErrors('Request failed due to error in ' . DivisionApi::getName() . ' API: ' . $response->json()['message']);
                         }
                     }
 
-                    // Detach the permission
-                    $user->groups()->wherePivot('area_id', $area->id)->wherePivot('group_id', $group->id)->detach();
+                    // Detach the permission (delete per-model so the revocation is logged)
+                    $assignments->get()->each->delete();
                 }
             }
 
             // Check and detach trainings from mentor
-            if ($user->teaches()->where('area_id', $area->id)->count() > 0 && ! $user->isMentor() && $value == false) {
+            if ($area !== null && $user->teaches()->where('area_id', $area->id)->count() > 0 && ! $user->hasRole('mentor') && $value == false) {
                 $user->teaches()->detach($user->teaches->where('area_id', $area->id));
             }
         }
@@ -395,7 +422,7 @@ class UserController extends Controller
     /**
      * Display a listing of user's settings
      *
-     * @return \Illuminate\Http\Response
+     * @return Response
      */
     public function settings()
     {
@@ -407,7 +434,7 @@ class UserController extends Controller
     /**
      * Update the user's settings to storage
      *
-     * @return \Illuminate\Http\Response
+     * @return Response
      */
     public function settings_update(Request $request, User $user)
     {
@@ -450,7 +477,7 @@ class UserController extends Controller
     /**
      * Display a listing of user's reports
      *
-     * @return \Illuminate\Http\Response
+     * @return Response
      */
     public function reports(Request $request, User $user)
     {
@@ -480,7 +507,7 @@ class UserController extends Controller
     /**
      * Renew 30 days on the workmail address
      *
-     * @return \Illuminate\Http\Response
+     * @return Response
      */
     public function extendWorkmail()
     {
@@ -499,7 +526,7 @@ class UserController extends Controller
     /**
      * Fetch users from VATSIM Core API
      *
-     * @return \Illuminate\Http\Response|bool
+     * @return Response|bool
      */
     private function fetchUsersFromVatsimCoreApi()
     {

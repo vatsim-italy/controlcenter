@@ -1,17 +1,26 @@
+# Intermediate build container for composer dependencies
+FROM docker.io/library/composer:latest AS composer
+
+WORKDIR /app
+COPY ./ /app/
+
+RUN composer install --no-dev --no-interaction --prefer-dist
+
 # Intermediate build container for front-end resources
-FROM docker.io/library/node:24.13.1-alpine AS frontend
+FROM docker.io/library/node:24.16.0-alpine AS frontend
 # Easy to prune intermediary containers
 LABEL stage=build
 
 WORKDIR /app
 COPY ./ /app/
+COPY --from=composer /app/vendor/ /app/vendor/
 
 RUN npm ci --omit dev && \
     npm run build
 
 ####################################################################################################
 # Primary container
-FROM docker.io/library/php:8.5.3-apache-bookworm
+FROM docker.io/library/php:8.5.7-apache-bookworm
 
 # Default container port for the apache configuration
 EXPOSE 80 443
@@ -35,7 +44,7 @@ COPY ./container/configs/php.ini /usr/local/etc/php/php.ini
 
 
 # Install PHP extension(s)
-COPY --from=mlocati/php-extension-installer:2.9.30 /usr/bin/install-php-extensions /usr/local/bin/
+COPY --from=mlocati/php-extension-installer:2.11.9 /usr/bin/install-php-extensions /usr/local/bin/
 # These are the extensions we depend on:
 # $ composer check -f json 2>/dev/null | jq '.[] | select(.name | startswith("ext-")) | .name | sub("ext-"; "")' -r
 # Currently, this seems to only be pdo_mysql.

@@ -129,7 +129,7 @@ class TrainingExaminationsTest extends TestCase
         $examination = TrainingExamination::create($this->examination->getAttributes());
 
         $moderator = User::factory()->create();
-        $moderator->groups()->attach(2, ['area_id' => $this->training->area->id]);
+        $moderator->roleAssignments()->create(['role' => 'moderator', 'area_id' => $this->training->area->id]);
 
         $this->actingAs($moderator)->followingRedirects()
             ->getJson(route('training.examination.delete', ['examination' => $examination]))
@@ -146,7 +146,7 @@ class TrainingExaminationsTest extends TestCase
         $examination = TrainingExamination::create($this->examination->getAttributes());
 
         $mentor = User::factory()->create();
-        $mentor->groups()->attach(3, ['area_id' => $this->training->area->id]);
+        $mentor->roleAssignments()->create(['role' => 'mentor', 'area_id' => $this->training->area->id]);
 
         $this->actingAs($mentor)->followingRedirects()
             ->get(route('training.examination.delete', ['examination' => $examination]))
@@ -162,7 +162,7 @@ class TrainingExaminationsTest extends TestCase
         $examination = TrainingExamination::create($this->examination->getAttributes());
 
         $buddy = User::factory()->create();
-        $buddy->groups()->attach(4, ['area_id' => $this->training->area->id]);
+        $buddy->roleAssignments()->create(['role' => 'buddy', 'area_id' => $this->training->area->id]);
 
         $this->actingAs($buddy)->followingRedirects()
             ->get(route('training.examination.delete', ['examination' => $examination]))
@@ -394,5 +394,31 @@ class TrainingExaminationsTest extends TestCase
             ->get(route('training.examination.create', ['training' => $this->training]));
 
         $response->assertStatus(403);
+    }
+
+    #[Test]
+    public function test_director_can_update_and_delete_examination_in_their_area(): void
+    {
+        $examination = TrainingExamination::create($this->examination->getAttributes());
+        $area = $this->training->area;
+
+        $director = User::factory()->create();
+        $director->roleAssignments()->create(['role' => 'director', 'area_id' => $area->id]);
+
+        $this->assertTrue($director->can('update', $examination));
+        $this->assertTrue($director->can('delete', $examination));
+        $this->assertTrue($director->can('view', $examination));
+    }
+
+    #[Test]
+    public function test_moderator_of_other_area_cannot_view_examination(): void
+    {
+        $examination = TrainingExamination::create($this->examination->getAttributes());
+
+        $otherArea = Area::factory()->create();
+        $moderator = User::factory()->create();
+        $moderator->roleAssignments()->create(['role' => 'moderator', 'area_id' => $otherArea->id]);
+
+        $this->assertFalse($moderator->can('view', $examination));
     }
 }

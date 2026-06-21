@@ -6,11 +6,11 @@ use App\Contracts\DivisionApiContract;
 use App\Helpers\VatsimRating;
 use App\Models\Area;
 use App\Models\Endorsement;
-use App\Models\Group;
 use App\Models\Position;
 use App\Models\Rating;
 use App\Models\User;
 use Carbon\Carbon;
+use Illuminate\Http\Client\Response;
 use Illuminate\Support\Facades\Http;
 
 class VATEUD implements DivisionApiContract
@@ -38,7 +38,7 @@ class VATEUD implements DivisionApiContract
     /**
      * Call the API with all headers predefined
      *
-     * @return \Illuminate\Http\Client\Response
+     * @return Response
      */
     private function callApi(string $url, string $method = 'GET', ?array $data = null, ?array $multipartData = null)
     {
@@ -65,7 +65,7 @@ class VATEUD implements DivisionApiContract
     /**
      * Assign a mentor to a user
      *
-     * @return \Illuminate\Http\Client\Response
+     * @return Response
      */
     public function assignMentor(User $user, int $requesterId)
     {
@@ -77,12 +77,12 @@ class VATEUD implements DivisionApiContract
     /**
      * Remove a mentor from a user
      *
-     * @return \Illuminate\Http\Client\Response
+     * @return Response
      */
     public function removeMentor(User $user, int $requesterId)
     {
         // Only remove from API if this is the last area in CC.
-        $mentorAssignments = Group::mentors()->where('id', $user->id)->count();
+        $mentorAssignments = $user->roleAssignments()->where('role', 'mentor')->count();
         if ($mentorAssignments <= 1) {
             return $this->callApi('/facility/training/remove/' . $user->id . '/mentor', 'POST', [
                 'user_cid' => $requesterId,
@@ -95,7 +95,7 @@ class VATEUD implements DivisionApiContract
     /**
      * Assign an examiner to a user
      *
-     * @return \Illuminate\Http\Client\Response
+     * @return Response
      */
     public function assignExaminer(User $user, Rating $rating, int $requesterId)
     {
@@ -112,7 +112,7 @@ class VATEUD implements DivisionApiContract
     /**
      * Remove an examiner from a user
      *
-     * @return \Illuminate\Http\Client\Response
+     * @return Response
      */
     public function removeExaminer(User $user, Endorsement $endorsement, int $requesterId)
     {
@@ -129,7 +129,7 @@ class VATEUD implements DivisionApiContract
     /**
      * Get the user's tier endorsements
      *
-     * @return \Illuminate\Http\Client\Response
+     * @return Response
      */
     public function getTierEndorsements(int $tier)
     {
@@ -139,7 +139,7 @@ class VATEUD implements DivisionApiContract
     /**
      * Assign a training position to a user
      *
-     * @return \Illuminate\Http\Client\Response
+     * @return Response
      */
     public function assignTierEndorsement(User $user, Rating $rating, int $requesterId)
     {
@@ -165,7 +165,7 @@ class VATEUD implements DivisionApiContract
     /**
      * Remove a training position from a user
      *
-     * @return \Illuminate\Http\Client\Response
+     * @return Response
      */
     public function revokeTierEndorsement(string $tier, int $userId, string $endorsementName)
     {
@@ -189,7 +189,7 @@ class VATEUD implements DivisionApiContract
     /**
      * Assign a solo endorsement to a user
      *
-     * @return \Illuminate\Http\Client\Response
+     * @return Response
      */
     public function assignSoloEndorsement(User $user, Position $position, int $requesterId, ?Carbon $expireAt = null)
     {
@@ -204,7 +204,7 @@ class VATEUD implements DivisionApiContract
     /**
      * Remove a solo endorsement from a user
      *
-     * @return \Illuminate\Http\Client\Response
+     * @return Response
      */
     public function revokeSoloEndorsement(Endorsement $endorsement)
     {
@@ -221,7 +221,7 @@ class VATEUD implements DivisionApiContract
     /**
      * Upload exam results
      *
-     * @return \Illuminate\Http\Client\Response
+     * @return Response
      */
     public function uploadExamResults(int $studentId, int $examinerId, bool $pass, string $positionName, string $filePath)
     {
@@ -248,7 +248,7 @@ class VATEUD implements DivisionApiContract
     /**
      * Request a rating upgrade for a user
      *
-     * @return \Illuminate\Http\Client\Response
+     * @return Response
      */
     public function requestRatingUpgrade(User $user, Rating $rating, int $requesterId)
     {
@@ -261,7 +261,7 @@ class VATEUD implements DivisionApiContract
     /**
      * Assign a theory exam for a user
      *
-     * @return \Illuminate\Http\Client\Response
+     * @return Response
      */
     public function assignTheoryExam(User $user, Rating $rating, int $requesterId)
     {
@@ -283,7 +283,7 @@ class VATEUD implements DivisionApiContract
     /**
      * Get the user's exams
      *
-     * @return \Illuminate\Http\Client\Response
+     * @return Response
      */
     public function getUserExams(User $user)
     {
@@ -375,7 +375,7 @@ class VATEUD implements DivisionApiContract
     /**
      * Get the roster
      *
-     * @return \Illuminate\Http\Client\Response
+     * @return Response
      */
     public function getRoster()
     {
@@ -385,7 +385,7 @@ class VATEUD implements DivisionApiContract
     /**
      * Assign a user to the roster
      *
-     * @return \Illuminate\Http\Client\Response
+     * @return Response
      */
     public function assignRosterUser(int $userId)
     {
@@ -395,7 +395,7 @@ class VATEUD implements DivisionApiContract
     /**
      * Remove a user from the roster
      *
-     * @return \Illuminate\Http\Client\Response
+     * @return Response
      */
     public function removeRosterUser(int $userId)
     {

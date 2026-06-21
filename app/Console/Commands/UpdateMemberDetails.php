@@ -3,11 +3,11 @@
 namespace App\Console\Commands;
 
 use anlutro\LaravelSettings\Facade as Setting;
-use App\Http\Controllers\ActivityLogController;
 use App\Models\AtcActivity;
 use App\Models\Training;
 use App\Models\User;
 use App\Notifications\TrainingClosedNotification;
+use App\Services\ActivityLogService;
 use Illuminate\Console\Command;
 
 class UpdateMemberDetails extends Command
@@ -43,7 +43,7 @@ class UpdateMemberDetails extends Command
      */
     public function handle()
     {
-        $mentors = User::allWithGroup('3');
+        $mentors = User::allWithRole('mentor');
 
         if (config('app.mode') == 'subdivision') {
             $divisions = array_map('trim', explode(',', Setting::get('trainingSubDivisions')));
@@ -65,8 +65,8 @@ class UpdateMemberDetails extends Command
             // Remove any active trainings and training roles
             $mentor->teaches()->detach();
 
-            // Remove mentor permission groups
-            $mentor->groups()->detach();
+            // Remove training role assignments (delete per-model so each revocation is logged)
+            $mentor->roleAssignments()->get()->each->delete();
             $mentor->save();
 
             $count++;
@@ -92,16 +92,20 @@ class UpdateMemberDetails extends Command
             // Detach mentors before closing the training
             $training->mentors()->detach();
 
-            // Close the training
-            $training->updateStatus(-4);
-            $training->closed_reason = 'The student has left or is no longer part of our division.';
-            $training->save();
+            // Close the training. Suppress automatic model-event logging here:
+            // the closure is recorded explicitly below, so the LogsActivity trait
+            // would only add a duplicate entry for this bulk maintenance write.
+            activity()->withoutLogging(function () use ($training) {
+                $training->updateStatus(-4);
+                $training->closed_reason = 'The student has left or is no longer part of our division.';
+                $training->save();
+            });
 
             // Notify student of closure
             $training->user->notify(new TrainingClosedNotification($training, -4, 'Student has left the division.'));
 
             // Log the closure
-            ActivityLogController::warning('TRAINING', 'Closed training request ' . $training->id . ' due to student leaving division');
+            ActivityLogService::warning('TRAINING', 'Closed training request ' . $training->id . ' due to student leaving division');
 
             $count++;
         }

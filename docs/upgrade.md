@@ -27,6 +27,34 @@ This is due to a change in the StatSim API offering which we didn't get around t
 
 The new API requires the use of a dedicated API key, which has a corresponding [required new environment variable for authenticating to StatSim](configuration/index.md#vatsim).
 
+### Access Management: CLI-only Admin and the new Director role
+
+The `admin` role is now strictly system-wide and can no longer be granted, scoped
+to an area, or revoked through the web UI. It is assigned exclusively via:
+
+```sh
+php artisan user:makeadmin
+```
+
+A new `director` [role takes over the "full access to an area" use-case](reference/permissions.md).
+It can be assigned per area or globally through the user access page, and holds every admin permission except the system-level ones (`manage-area`, `view-system-health`).
+Only global admins and global directors can grant or revoke directorships.
+
+#### Manual step after upgrading
+
+Members of the previous administrator group are migrated as **global admins** and
+retain full access. After upgrading, review who actually needs system-wide admin
+rights:
+
+1. Grant `director` (per-area or global) through the UI to those who only need
+   area- or organisation-level management access.
+2. Remove their admin assignment from the `role_user` table directly
+   (`DELETE FROM role_user WHERE user_id = <cid> AND role = 'admin';`).
+   There is no CLI command for revoking admin yet.
+   <!-- TODO: replace with `user:removeadmin` once available. -->
+
+Until this review is done, previously migrated admins keep unrestricted access.
+
 ### Theme System Migration
 
 The theme system has been completely redesigned to support light/dark themes and user preferences.
@@ -72,6 +100,32 @@ If you had customized colors in your `.env` file:
 
 For detailed information on using themes as an end-user, see the [User Theme Guide](user-themes.md).  
 For customizing themes as an operator, see [Theme Setup](setup/theme.md)
+
+### Permissions and Roles Refactor
+
+The permission and group system has been rebuilt around a configurable role matrix. See [Permissions and Roles](concepts/permissions.md) for the new model.
+
+#### Breaking Changes
+
+1. **Database tables replaced**: The `groups` and `permissions` tables are dropped. User assignments now live in a single `role_user` table that stores the role name as a string and an optional `area_id` (null for global roles).
+2. **Permissions are no longer stored in the database**: They are defined in `config/roles.php` as a *matrix* that maps each permission to the list of roles that hold it. Editing roles or permissions now means editing that file (and clearing config cache), not the database.
+3. **Admins are now strictly global**: Any `area_id` previously attached to an admin assignment is discarded by the migration. An admin assignment without a target area applies system-wide.
+4. **Custom groups are not migrated**: Only the four standard groups (Administrator, Moderator, Mentor, Buddy) are converted to roles. Any custom group rows you added directly to the `groups` or `permissions` tables will be dropped along with the tables. Note them down before upgrading and re-create them as roles in `config/roles.php` afterwards.
+5. **The `nav-editor` role is new in this version**: It ships in `config/roles.php` (see [Permissions and Roles](concepts/permissions.md)) but is not derived from any legacy group, so no users will be auto-assigned to it during the migration. Grant it explicitly to whoever needs to edit navigational data within an area.
+
+#### Migration Steps
+
+1. **Audit any custom groups** you may have added outside the four defaults; capture their members so you can re-grant access after the upgrade.
+2. **Run the database migration**:
+   ```sh
+   php artisan migrate
+   ```
+   This creates `role_user`, copies the four standard groups across, and drops the old tables.
+3. **Review `config/roles.php`** and adjust the matrix if your division wants different permissions per role, or wants to add roles beyond the defaults.
+4. **Clear caches**:
+   ```sh
+   php artisan optimize:clear
+   ```
 
 ## Upgrading to 6.0.0
 

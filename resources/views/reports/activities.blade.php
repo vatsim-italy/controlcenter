@@ -4,14 +4,14 @@
 @section('title-flex')
     <div>
         <i class="fas fa-filter text-secondary"></i>&nbsp;Filter&nbsp;
-        @if(\Auth::user()->isAdmin())
+        @if(\Auth::user()->accessibleAreasForPermission('training.activities.view')->isGlobal)
             <a class="btn btn-sm {{ $filterName == "All Areas" ? 'btn-primary' : 'btn-outline-primary' }}" href="{{ route('reports.activities') }}">All Areas</a>
         @endif
         @foreach($areas as $area)
-            @if(\Auth::user()->isModeratorOrAbove($area))
+            @can('training.activities.view', $area)
                 <a class="btn btn-sm {{ $filterName == $area->name ? 'btn-primary' : 'btn-outline-primary' }}" href="{{ route('reports.activities.area', $area->id) }}">{{ $area->name }}</a>
-            @endif
-        @endforeach 
+            @endcan
+        @endforeach
     </div>
 @endsection
 
@@ -174,15 +174,9 @@
 
                                     </td>
                                     <td>
-                                        @if(is_a($activity, 'App\Models\TrainingReport'))
-                                            <span data-bs-toggle="tooltip" data-bs-placement="top" title="{{ $activity->updated_at->toEuropeanDateTime() }}">
-                                                {{ $activity->updated_at->diffForHumans() }}
-                                            </span>
-                                        @else
-                                            <span data-bs-toggle="tooltip" data-bs-placement="top" title="{{ $activity->created_at->toEuropeanDateTime() }}">
-                                                {{ $activity->created_at->diffForHumans() }}
-                                            </span>
-                                        @endif
+                                        <span data-bs-toggle="tooltip" data-bs-placement="top" title="{{ $activity->activity_date->toEuropeanDateTime() }}">
+                                            {{ $activity->activity_date->diffForHumans() }}
+                                        </span>
                                     </td>
                                 </tr>
                             @endforeach

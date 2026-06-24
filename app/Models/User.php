@@ -565,6 +565,18 @@ class User extends Authenticatable
             ->isNotEmpty();
     }
 
+
+    public function isModerator(?Area $area = null): bool
+    {
+        $areas = $area ? [$area] : Area::all();
+        foreach ($areas as $area) {
+            if ($this->hasRole('moderator', $area)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     public function isModeratorOrAbove(?Area $area = null): bool
     {
         $areas = $area ? [$area] : Area::all();

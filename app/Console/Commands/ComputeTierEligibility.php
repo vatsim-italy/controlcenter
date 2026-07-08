@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Jobs;
+namespace App\Console\Commands;
 
 use App\Helpers\VatsimRating;
 use App\Models\Rating;
@@ -8,17 +8,25 @@ use App\Models\RatingEligibility;
 use App\Models\User;
 use App\Services\StatisticsService;
 use Carbon\Carbon;
-use Illuminate\Bus\Queueable;
-use Illuminate\Contracts\Queue\ShouldQueue;
-use Illuminate\Foundation\Bus\Dispatchable;
-use Illuminate\Queue\InteractsWithQueue;
-use Illuminate\Queue\SerializesModels;
+use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Log;
 use anlutro\LaravelSettings\Facade as Setting;
 
-class ComputeTierEligibility implements ShouldQueue
+class ComputeTierEligibilityCommand extends Command
 {
-    use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
+    /**
+     * The name and signature of the console command.
+     *
+     * @var string
+     */
+    protected $signature = 'sync:compute-eligibility';
+
+    /**
+     * The console command description.
+     *
+     * @var string
+     */
+    protected $description = 'Computes tier eligibility for active ATC users.';
 
     private const TIERS = [
         'LIMC_X_GND/DEL' => [
@@ -72,15 +80,20 @@ class ComputeTierEligibility implements ShouldQueue
         'app' => ['_APP'],
     ];
 
-    public function handle(StatisticsService $statisticsService): void
+    /**
+     * Execute the console command.
+     */
+    public function handle(StatisticsService $statisticsService): int
     {
+        $this->info('ComputeTierEligibility: starting');
         Log::info('ComputeTierEligibility: starting');
 
         $tierRatings = Rating::where('endorsement_type', 'T1')->get()->keyBy('name');
 
         if ($tierRatings->isEmpty()) {
+            $this->warn('ComputeTierEligibility: no T1 ratings found, aborting.');
             Log::warning('ComputeTierEligibility: no T1 ratings found, aborting.');
-            return;
+            return Command::FAILURE;
         }
 
         $allowedSubDivisions = array_map('trim', explode(',', Setting::get('trainingSubDivisions', '')));
@@ -106,10 +119,15 @@ class ComputeTierEligibility implements ShouldQueue
                     try {
                         $this->processUser($user, $tierRatings, $statisticsService, $from, $to);
                         $processed++;
+                        
+                        // Output progress to console every user processed
+                        $this->line("Processed user ID: {$user->id}");
+                        
                         usleep(200000); 
 
                     } catch (\Throwable $e) {
                         $failed++;
+                        $this->error("ComputeTierEligibility: failed for user {$user->id}");
                         Log::error('ComputeTierEligibility: failed for user ' . $user->id, [
                             'error' => $e->getMessage(),
                         ]);
@@ -117,7 +135,11 @@ class ComputeTierEligibility implements ShouldQueue
                 }
             });
 
+        $summary = "Done! Processed: {$processed}, Failed: {$failed}";
+        $this->info($summary);
         Log::info('ComputeTierEligibility: done', ['processed' => $processed, 'failed' => $failed]);
+
+        return Command::SUCCESS;
     }
 
     private function processUser(
@@ -208,7 +230,7 @@ class ComputeTierEligibility implements ShouldQueue
         if ($user->rating < $config['min_rating']->value) {
             $unmet[] = $config['min_rating']->name . ' rating required';
         } elseif ($user->rating === $config['min_rating']->value) {
-                $ratingObtainedAt = $this->getRatingObtainedAt($user, $config['min_rating']);
+            $ratingObtainedAt = $this->getRatingObtainedAt($user, $config['min_rating']);
             if (! $this->hasHeldRatingForMonths($ratingObtainedAt, $config['rating_months'])) {
                 $unmet[] = sprintf(
                     '%s rating must be held for at least %d months',

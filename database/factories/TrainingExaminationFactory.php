@@ -4,7 +4,6 @@ namespace Database\Factories;
 
 use App\Models\Position;
 use App\Models\TrainingExamination;
-use App\Models\Position;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 class TrainingExaminationFactory extends Factory

@@ -5,7 +5,6 @@ namespace App\Console;
 use anlutro\LaravelSettings\Facade as Setting;
 use Illuminate\Console\Scheduling\Schedule;
 use Illuminate\Foundation\Console\Kernel as ConsoleKernel;
-use App\Jobs\ComputeTierEligibility;
 
 class Kernel extends ConsoleKernel
 {
@@ -17,6 +16,7 @@ class Kernel extends ConsoleKernel
     protected $commands = [
         Commands\CleanEndorsements::class,
         Commands\UpdateMemberDetails::class,
+        Commands\ComputeTierEligibilityCommand::class
     ];
 
     /**
@@ -91,7 +91,8 @@ class Kernel extends ConsoleKernel
                 ->daily();
         }
 
-        $schedule->job(new ComputeTierEligibility)->dailyAt('03:00');
+        $schedule->command('sync:compute-eligibility')
+                    ->daily();
 
         // Check if updates are available
         $schedule->command('check:update')

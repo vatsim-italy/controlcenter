@@ -12,7 +12,7 @@ use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Log;
 use anlutro\LaravelSettings\Facade as Setting;
 
-class ComputeTierEligibilityCommand extends Command
+class ComputeTierEligibility extends Command
 {
     /**
      * The name and signature of the console command.

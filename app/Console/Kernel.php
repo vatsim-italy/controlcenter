@@ -15,8 +15,7 @@ class Kernel extends ConsoleKernel
      */
     protected $commands = [
         Commands\CleanEndorsements::class,
-        Commands\UpdateMemberDetails::class,
-        Commands\ComputeTierEligibilityCommand::class
+        Commands\UpdateMemberDetails::class
     ];
 
     /**

@@ -346,6 +346,9 @@ class VATEUD implements DivisionApiContract
             case 76:
                 $rating = 'T1 LIMC TWR';
                 break;
+            case 83:
+                $rating = 'S3 Entry';
+                break;
             
         }
 
